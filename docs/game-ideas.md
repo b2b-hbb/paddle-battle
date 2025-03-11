@@ -1,0 +1,23 @@
+
+ - raft wars style boat battle
+    - crew member nfts
+    - crew pets
+    - afk progress through autobattler with crew members
+    - start with more input firing boat weapons, transition to auto
+ - tower defense
+    - afk progress
+    - themed campaigns over different seasons
+        - ie templars, ancient rome, etc
+    - season payouts for targets
+ - community vs admin tower defense
+    - admin has tokens vesting locked up and liquidity for token on uniswap
+    - admin can buy troops with tokens and tower defense
+    - community needs to defeat admin
+    - admin has "power pockets" that if defeated community gets tokens
+ - agario style random competition
+    - 2 balls at the top, release them to fall in map with physics. first to bottom wins
+    - bet on outcome
+    - commit reveal for randomness
+ - fighting game "Your Only Move Is HUSTLE" style
+    - https://www.youtube.com/watch?v=yoIsxZV1THc
+

@@ -1,0 +1,45 @@
+[package]
+name = "paddle-battle"
+version = "0.1.5"
+edition = "2021"
+
+[dependencies]
+alloy-primitives = "0.3.1"
+alloy-sol-types = "0.3.1"
+mini-alloc = "0.4.2"
+stylus-sdk = {version = "0.4.3", optional = true}
+hex = "0.4.3"
+serde = { version = "1.0.198", features = ["derive"] }
+wasm-bindgen = { version = "0.2.92", optional = true }
+serde_json = "1.0.116"
+console_error_panic_hook = "0.1.7"
+
+[dev-dependencies]
+strum = "0.26.2"
+strum_macros = "0.26.2"
+
+[features]
+export-abi = ["stylus-sdk/export-abi"]
+debug = ["stylus-sdk/debug"]
+# default = ["web", "stylus"]
+default = ["stylus"]
+stylus = ["stylus-sdk"]
+web = ["wasm-bindgen"]
+
+[[bin]]
+name = "paddle-battle"
+path = "src/main.rs"
+
+[lib]
+crate-type = ["lib", "cdylib"]
+
+[profile.release]
+codegen-units = 1
+strip = true
+lto = true
+panic = "abort"
+opt-level = "s"
+# TODO: remove debug
+debug=true
+
+# TODO: can cargo build run wasmpack
