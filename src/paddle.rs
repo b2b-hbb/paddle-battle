@@ -21,8 +21,12 @@ pub enum GameInput {
     MoveRightRaftRight,
     MoveRightRaftLeft,
     AddProjectile,
-    MoveLeftFastRaftRight,
     MoveLeftFastRaftLeft,
+    MoveLeftFastRaftRight,
+    MoveUpRaftRight,
+    MoveRightRaftDown,
+    MoveLeftRaftUp,
+    MoveLeftRaftDown,
 }
 
 impl GameInput {
@@ -40,6 +44,10 @@ impl GameInput {
             6 => Ok(Self::AddProjectile),
             7 => Ok(Self::MoveLeftFastRaftLeft),
             8 => Ok(Self::MoveLeftFastRaftRight),
+            9 => Ok(Self::MoveUpRaftRight),
+            10 => Ok(Self::MoveRightRaftDown),
+            11 => Ok(Self::MoveLeftRaftUp),
+            12 => Ok(Self::MoveLeftRaftDown),
             86 => Ok(Self::NoOp),
             received => Err(SimulationError::InvalidInput { received }),
         }
@@ -57,6 +65,10 @@ impl GameInput {
             Self::AddProjectile => 6,
             Self::MoveLeftFastRaftLeft => 7,
             Self::MoveLeftFastRaftRight => 8,
+            Self::MoveUpRaftRight => 9,
+            Self::MoveRightRaftDown => 10,
+            Self::MoveLeftRaftUp => 11,
+            Self::MoveLeftRaftDown => 12,
             Self::NoOp => 86,
         }
     }
@@ -186,6 +198,10 @@ impl GameState {
                                         raft_right.entity.velocity.vx =
                                             consts::VELOCITY_GAIN_NORMAL;
                                     }
+                                    GameInput::MoveUpRaftRight => {
+                                        raft_right.entity.velocity.vy = 
+                                            consts::VELOCITY_GAIN_NORMAL;
+                                    }
                                     GameInput::MoveRightRaftLeft => {
                                         raft_right.entity.velocity.vx =
                                             -consts::VELOCITY_GAIN_NORMAL;
@@ -209,6 +225,15 @@ impl GameState {
                                             &GunTypes::SMG,
                                         );
                                         projectiles.push(prj);
+                                    }
+                                    GameInput::MoveRightRaftDown => {
+                                        raft_right.entity.velocity.vy = -consts::VELOCITY_GAIN_NORMAL;
+                                    }
+                                    GameInput::MoveLeftRaftUp => {
+                                        raft_left.entity.velocity.vy = consts::VELOCITY_GAIN_NORMAL;
+                                    }
+                                    GameInput::MoveLeftRaftDown => {
+                                        raft_left.entity.velocity.vy = -consts::VELOCITY_GAIN_NORMAL;
                                     }
                                 },
                             };

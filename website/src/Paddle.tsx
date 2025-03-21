@@ -28,11 +28,13 @@ const buttonPressed = {
   "S": false,
   "Escape": false,
   "ArrowDown": false,
+  "ArrowUp": false,
   "p": false,
   "P": false,
   "z": false,
   "Z": false,
   " ": false,
+  "w": false,
 };
 
 type TKeyButtonPressed = keyof typeof buttonPressed
@@ -132,10 +134,16 @@ const PaddleGame: React.FC = () => {
       if (buttonPressed["ArrowDown"]) inputCodes.push(3);
       if (buttonPressed["ArrowRight"]) inputCodes.push(4);
       if (buttonPressed["ArrowLeft"]) inputCodes.push(5);
+      if (buttonPressed["ArrowUp"]) inputCodes.push(9);
       if (buttonPressed["p"] || buttonPressed["P"]) inputCodes.push(6);
       if (buttonPressed["z"] || buttonPressed["Z"]) inputCodes.push(7);
       if (buttonPressed[" "]) inputCodes.push(8);
       if (buttonPressed["Escape"]) inputCodes.push(86);
+
+      if (buttonPressed["ArrowUp"]) inputCodes.push(9);
+      if (buttonPressed["ArrowDown"]) inputCodes.push(10);
+      if (buttonPressed["w"]) inputCodes.push(11);
+      if (buttonPressed["s"]) inputCodes.push(12);
 
       while (inputCodes.length < TICK_INPUT_API_CHUNK_SIZE) {
         inputCodes.push(86);
