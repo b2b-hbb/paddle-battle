@@ -39,6 +39,32 @@ const buttonPressed = {
 
 type TKeyButtonPressed = keyof typeof buttonPressed
 
+const LoadScreen: React.FC<{ onStart: (leftGun: string, rightGun: string) => void }> = ({ onStart }) => {
+    const [leftGun, setLeftGun] = useState('Bazooka');
+    const [rightGun, setRightGun] = useState('SMG');
+
+    return (
+        <div>
+            <h2>Select Guns for Raft Fighters</h2>
+            <div>
+                <label>Left Raft Gun:</label>
+                <select value={leftGun} onChange={(e) => setLeftGun(e.target.value)}>
+                    <option value="Bazooka">Bazooka</option>
+                    <option value="SMG">SMG</option>
+                </select>
+            </div>
+            <div>
+                <label>Right Raft Gun:</label>
+                <select value={rightGun} onChange={(e) => setRightGun(e.target.value)}>
+                    <option value="Bazooka">Bazooka</option>
+                    <option value="SMG">SMG</option>
+                </select>
+            </div>
+            <button onClick={() => onStart(leftGun, rightGun)}>Start Game</button>
+        </div>
+    );
+};
+
 const PaddleGame: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wasmRef = useRef<WasmState | null>(null);
@@ -46,15 +72,20 @@ const PaddleGame: React.FC = () => {
   const scaleRef = useRef<[number, number]>([1, 1]);
   const tickCounterRef = useRef<number>(0);
   const [gameState, setGameState] = useState<GameState | undefined>(undefined)
-  // const gameStateRef = useRef<GameState>();
+  const [gameStarted, setGameStarted] = useState(false);
+  const [leftGun, setLeftGun] = useState('Bazooka');
+  const [rightGun, setRightGun] = useState('SMG');
 
   function drawGame(ctx: CanvasRenderingContext2D, gameState: GameState) {
+    console.log('drawGame called');
+    console.log('Current transformation matrix:', ctx.getTransform());
     const [scaleX, scaleY] = scaleRef.current;
 
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
-    ctx.fillStyle = '#0000FF';
     const raftLeft = gameState.raft_left;
+    console.log('Raft Left Color:', raftLeft.style.color);
+    ctx.fillStyle = raftLeft.style.color;
     ctx.fillRect(
       raftLeft.entity.position.x * scaleX,
       raftLeft.entity.position.y * scaleY,
@@ -63,6 +94,8 @@ const PaddleGame: React.FC = () => {
     );
 
     const raftRight = gameState.raft_right;
+    console.log('Raft Right Color:', raftRight.style.color);
+    ctx.fillStyle = raftRight.style.color;
     ctx.fillRect(
       raftRight.entity.position.x * scaleX,
       raftRight.entity.position.y * scaleY,
@@ -70,13 +103,15 @@ const PaddleGame: React.FC = () => {
       raftRight.height * scaleY
     );
 
-    ctx.fillStyle = '#008000';
     gameState.projectiles.forEach((projectile) => {
+      const { radius, style } = projectile;
+      console.log('Projectile Color:', style.color);
+      ctx.fillStyle = style.color;
       ctx.beginPath();
       ctx.arc(
         projectile.entity.position.x * scaleX,
         projectile.entity.position.y * scaleY,
-        projectile.radius * Math.min(scaleX, scaleY), // Applying scaleX for radius assuming uniform scaling
+        radius * Math.min(scaleX, scaleY),
         0,
         2 * Math.PI
       );
@@ -84,29 +119,39 @@ const PaddleGame: React.FC = () => {
     });
 
     gameState.raft_left.raft_fighters.forEach((fighter) => {
-      ctx.fillStyle = '#0F002F';
+      console.log('Raft Left Fighter Color:', fighter.style.color);
+      ctx.fillStyle = fighter.style.color;
       ctx.fillRect(
         fighter.entity.position.x * scaleX,
         fighter.entity.position.y * scaleY,
         fighter.width * scaleX,
         fighter.height * scaleY
       );
+      ctx.fillStyle = '#000000';
+      ctx.fillText(`HP: ${fighter.curr_health}`,
+        fighter.entity.position.x * scaleX + 50,
+        (fighter.entity.position.y - 10) * scaleY
+      );
     });
     gameState.raft_right.raft_fighters.forEach((fighter) => {
-      ctx.fillStyle = '#0F002F';
+      console.log('Raft Right Fighter Color:', fighter.style.color);
+      ctx.fillStyle = fighter.style.color;
       ctx.fillRect(
         fighter.entity.position.x * scaleX,
         fighter.entity.position.y * scaleY,
         fighter.width * scaleX,
         fighter.height * scaleY
+      );
+      ctx.fillStyle = '#000000';
+      ctx.fillText(`HP: ${fighter.curr_health}`,
+        fighter.entity.position.x * scaleX + 50,
+        (fighter.entity.position.y - 10) * scaleY
       );
     });
   }
 
   const gameLoop = () => {
     if (!wasmRef.current || !canvasRef.current) {
-      // console.log("no wasmref or canvasref in game loop")
-      // return;
       throw new Error("missing wasmref or canvasref in game loop");
     }
 
@@ -118,11 +163,10 @@ const PaddleGame: React.FC = () => {
 
       const ctx = canvasRef.current.getContext('2d');
       if (!ctx) {
-        // console.log("no ctx in game loop")
-        // return;
-        throw new Error("missing canvas in game loop")
+        throw new Error("missing canvas in game loop");
       }
       ctx.setTransform(1, 0, 0, -1, 0, canvasRef.current.height);
+      console.log('Canvas transformation set:', ctx.getTransform());
 
       const inputCodes: number[] = [];
 
@@ -162,7 +206,6 @@ const PaddleGame: React.FC = () => {
       const array = new Uint32Array(final.flat());
       const state = parseGameState(wasmRef.current.tick_and_return_state(TICKS_PER_LOOP, array))
       setGameState(state);
-      // console.log(state.raft_left)
       drawGame(ctx, state);
       tickCounterRef.current = end_tick;
     }
@@ -183,32 +226,41 @@ const PaddleGame: React.FC = () => {
     }
   };
 
+  const startGame = (leftGun: string, rightGun: string) => {
+    if (!gameStarted) {
+      setLeftGun(leftGun);
+      setRightGun(rightGun);
+      setGameStarted(true);
+    }
+  };
+
   useEffect(() => {
+    console.log('useEffect triggered');
+    if (!gameStarted) return;
+
     const loadGame = async () => {
       const canvas = canvasRef.current;
-      const wasm = wasmRef.current;
+      console.log('Canvas ref:', canvas);
 
-      if (wasm !== null) {
-        // console.log("wasm already initiated")
-        // return;
-        throw new Error("wasm already initiated")
+      if (wasmRef.current !== null) {
+        throw new Error("wasm already initiated");
       }
 
       await init();
       wasmRef.current = new WasmState();
 
-      if (canvas === null) throw new Error("no canvas")
+      if (canvas === null) throw new Error("no canvas");
 
       const ctx = canvas.getContext('2d');
-      if (ctx === null) throw new Error("no context")
+      if (ctx === null) throw new Error("no context");
 
       const maxX = wasmRef.current.get_max_x();
       const maxY = wasmRef.current.get_max_y();
       const wasmTicksPerInput = wasmRef.current.ticks_per_input();
       const wasmChunkSize = wasmRef.current.tick_input_api_chunk_size();
 
-      if (wasmTicksPerInput !== TICKS_PER_INPUT) throw new Error("wrong ticks per input")
-      if (wasmChunkSize !== TICK_INPUT_API_CHUNK_SIZE) throw new Error("wrong chunk size")
+      if (wasmTicksPerInput !== TICKS_PER_INPUT) throw new Error("wrong ticks per input");
+      if (wasmChunkSize !== TICK_INPUT_API_CHUNK_SIZE) throw new Error("wrong chunk size");
 
       const scaleX = canvasWidth / maxX;
       const scaleY = canvasHeight / maxY;
@@ -226,26 +278,32 @@ const PaddleGame: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, []);
+  }, [gameStarted]);
 
   return (
     <div>
-      <canvas style={{ border: "5px solid black", margin: "1em" }} ref={canvasRef} width={canvasWidth} height={canvasHeight} />
-      <p>
-        <br />
-        Paddle Left
-        <br />
-        Max health: {gameState?.raft_left.max_health}
-        <br />
-        Curr health: {gameState?.raft_left.curr_health}
-        <br />
-        <br />
-        Paddle Right
-        <br />
-        Max health: {gameState?.raft_right.max_health}
-        <br />
-        Curr health: {gameState?.raft_right.curr_health}
-      </p>
+      {!gameStarted ? (
+        <LoadScreen onStart={startGame} />
+      ) : (
+        <div>
+          <canvas style={{ border: "5px solid black", margin: "1em" }} ref={canvasRef} width={canvasWidth} height={canvasHeight} />
+          <p>
+            <br />
+            Paddle Left
+            <br />
+            Max health: {gameState?.raft_left.max_health}
+            <br />
+            Curr health: {gameState?.raft_left.curr_health}
+            <br />
+            <br />
+            Paddle Right
+            <br />
+            Max health: {gameState?.raft_right.max_health}
+            <br />
+            Curr health: {gameState?.raft_right.curr_health}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

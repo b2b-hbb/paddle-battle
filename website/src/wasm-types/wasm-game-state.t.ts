@@ -13,6 +13,10 @@ type Entity = {
     velocity: Velocity;
 };
 
+type Style = {
+    color: string;
+};
+
 type Raft = {
     entity: Entity;
     raft_fighters: RaftFighter[];
@@ -20,11 +24,13 @@ type Raft = {
     height: number;
     max_health: number;
     curr_health: number;
+    style: Style;
 };
 
 type Projectile = {
     entity: Entity;
     radius: number;
+    style: Style;
 };
 
 type RaftFighter = {
@@ -33,6 +39,7 @@ type RaftFighter = {
     height: number;
     max_health: number;
     curr_health: number;
+    style: Style;
 }
 
 export type GameState = {

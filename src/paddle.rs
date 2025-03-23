@@ -6,6 +6,7 @@ use crate::physics::Collision;
 use crate::world::GunTypes;
 use crate::world::RaftFighter;
 use crate::world::{Entity, GameState, Position, Projectile, Raft, Velocity};
+use crate::world::Style;
 
 #[cfg(test)]
 use strum_macros::{EnumCount, EnumIter};
@@ -77,45 +78,45 @@ impl GameInput {
 impl GameState {
     #[must_use]
     pub fn new() -> Self {
-        let left_fighters = vec![RaftFighter::new(
+
+        let mut raft_left = Raft::new(
             Entity {
                 position: consts::LEFT_RAFT_INIT_POS,
                 velocity: consts::NO_VELOCITY,
                 is_active: true,
             },
             GunTypes::Bazooka,
-        )];
-        let mut right_fighters = vec![RaftFighter::new(
-            Entity {
-                position: consts::RIGHT_RAFT_INIT_POS,
-                velocity: consts::NO_VELOCITY,
-                is_active: true,
+            Style { color: "#FF0000".to_string() },
+        );
+
+        let fighter_entity = Entity {
+            position: Position {
+                x: raft_left.entity.position.x + raft_left.width * 4 / 5,
+                y: raft_left.entity.position.y + raft_left.height * 4 / 5,
             },
-            GunTypes::SMG,
-        )];
-        right_fighters[0].entity.position.x = right_fighters[0]
-            .entity
-            .position
-            .x
-            .saturating_add(consts::DEFAULT_RAFT_WIDTH);
+            velocity: consts::NO_VELOCITY,
+            is_active: true,
+        };
+
+        let bazooka_fighter = RaftFighter::new(
+            fighter_entity, GunTypes::SMG, consts::DEFAULT_RAFT_FIGHTER_WIDTH, consts::DEFAULT_RAFT_FIGHTER_HEIGHT
+        );
+
+        raft_left.position_fighters(vec![bazooka_fighter]);
+
         Self {
-            raft_left: Raft::new(
-                Entity {
-                    position: consts::LEFT_RAFT_INIT_POS,
-                    velocity: consts::NO_VELOCITY,
-                    is_active: true,
-                },
-                GunTypes::Bazooka,
-                left_fighters,
-            ),
+            raft_left,
             raft_right: Raft::new(
                 Entity {
-                    position: consts::RIGHT_RAFT_INIT_POS,
+                    position: Position {
+                        x: consts::WORLD_MAX_X - consts::DEFAULT_RAFT_WIDTH,
+                        y: consts::RIGHT_RAFT_INIT_POS.y,
+                    },
                     velocity: consts::NO_VELOCITY,
                     is_active: true,
                 },
                 GunTypes::SMG,
-                right_fighters,
+                Style { color: "#0000FF".to_string() },
             ),
             projectiles: vec![],
             ticks: 0,
@@ -297,6 +298,7 @@ impl GameState {
                         projectiles.push(proj);
                     }
                 }
+
             }
 
             if raft_right.entity.is_active {
@@ -304,6 +306,7 @@ impl GameState {
                 raft_right.update_position(curr_tick);
 
                 if !is_within_world_bounds(raft_right) {
+                    raft_right.entity.position.x = raft_right.entity.position.x.min(consts::WORLD_MAX_X - raft_right.width);
                     raft_right.entity = prev_entity;
                 }
 
@@ -368,6 +371,8 @@ impl GameState {
             }
 
             projectiles.retain(|p| p.entity.is_active);
+            raft_left.raft_fighters.retain(|f| f.entity.is_active);
+            raft_right.raft_fighters.retain(|f| f.entity.is_active);
 
             self.ticks += 1;
         }
@@ -387,31 +392,26 @@ pub enum ProjectileDirection {
     StraightDown,
 }
 impl Projectile {
-    #[must_use]
-    pub const fn create_projectile(
-        init_pos: Position,
-        direction: &ProjectileDirection,
-        gun: &GunTypes,
-    ) -> Self {
-        // TODO: vary speed depending on gun type
-        let vx = consts::WORLD_MAX_X_I32 * 5 / 1000;
-        let vy = consts::WORLD_MAX_Y_I32 * 5 / 1000;
-        let radius = match gun {
-            GunTypes::Bazooka => consts::DEFAULT_PROJECTILE_RADIUS * 2,
-            GunTypes::SMG => consts::DEFAULT_PROJECTILE_RADIUS,
+    pub fn create_projectile(init_pos: Position, direction: &ProjectileDirection, gun: &GunTypes) -> Self {
+        let (radius, velocity) = match gun {
+            GunTypes::Bazooka => (consts::DEFAULT_PROJECTILE_RADIUS * 2, Velocity { vx: 5, vy: 5 }),
+            GunTypes::SMG => (consts::DEFAULT_PROJECTILE_RADIUS, Velocity { vx: 10, vy: 10 }),
         };
+
+        let style = gun.style();
 
         Self {
             radius,
             entity: Entity {
                 position: init_pos,
                 velocity: match direction {
-                    ProjectileDirection::ArchLeft => Velocity { vx: -vx, vy },
-                    ProjectileDirection::ArchRight => Velocity { vx, vy },
-                    ProjectileDirection::StraightDown => Velocity { vx: 0, vy: -vy },
+                    ProjectileDirection::ArchLeft => Velocity { vx: -velocity.vx, vy: velocity.vy },
+                    ProjectileDirection::ArchRight => velocity,
+                    ProjectileDirection::StraightDown => Velocity { vx: 0, vy: -velocity.vy },
                 },
                 is_active: true,
             },
+            style,
         }
     }
 
@@ -462,7 +462,6 @@ impl Raft {
     pub const fn shoots_from(&self, side: &ShootsFromSide) -> Position {
         match side {
             ShootsFromSide::Right => Position {
-                // TODO: adjust radius depending on gun type
                 x: self.entity.position.x + self.width + consts::DEFAULT_PROJECTILE_RADIUS * 2,
                 y: self.entity.position.y + self.height + consts::DEFAULT_PROJECTILE_RADIUS * 2,
             },
@@ -474,6 +473,28 @@ impl Raft {
                     .saturating_sub(consts::DEFAULT_PROJECTILE_RADIUS),
                 y: self.entity.position.y + self.height + consts::DEFAULT_PROJECTILE_RADIUS * 2,
             },
+        }
+    }
+
+    pub fn position_fighters(&mut self, fighters: Vec<RaftFighter>) {
+        for fighter in fighters {
+            let (fx, fy, fw, fh) = fighter.bounding_box();
+            let (rx, ry, rw, rh) = self.bounding_box();
+
+            // Calculate the overlapping area
+            let overlap_x = (fx.max(rx) as i32 - (fx + fw).min(rx + rw) as i32).abs() as u32;
+            let overlap_y = (fy.max(ry) as i32 - (fy + fh).min(ry + rh) as i32).abs() as u32;
+
+            // Calculate the area of the fighter
+            let fighter_area = fw * fh;
+
+            // Calculate the overlapping area
+            let overlap_area = overlap_x * overlap_y;
+
+            // Check if the overlap area is at least a certain percentage of the fighter's area
+            if overlap_area as f32 / fighter_area as f32 >= 0.05 { // Assuming 5% overlap is required
+                self.raft_fighters.push(fighter.clone());
+            }
         }
     }
 }
