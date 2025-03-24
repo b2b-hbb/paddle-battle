@@ -334,7 +334,7 @@ const fn tick_inputs_needed(ticks_to_process: u32) -> u32 {
 
 fn is_within_world_bounds<T: Collision>(obj: &T) -> bool {
     let (x, y, width, height) = obj.bounding_box();
-    x > 0 && y > 0 && x + width < consts::WORLD_MAX_X && y + height < consts::WORLD_MAX_Y
+    x > 0 && y > 0 && x.saturating_add(width) <= consts::WORLD_MAX_X && y.saturating_add(height) <= consts::WORLD_MAX_Y
 }
 
 

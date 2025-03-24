@@ -116,11 +116,17 @@ impl Projectile {
             .x
             .saturating_add_signed(self.entity.velocity.vx);
 
-        // apply sine wave to y position
-        let amplitude = 10; // Adjust the amplitude of the sine wave
-        let frequency = 1; // Adjust the frequency of the sine wave
-        let sine_wave = [0, 1, 0, -1]; // Precomputed sine wave values for simplicity
-        self.entity.position.y = self.entity.position.y.saturating_add((amplitude as i32 * sine_wave[(curr_tick as usize * frequency) % sine_wave.len()]) as u32);
+        // apply sine wave to y position using lookup table
+        const AMPLITUDE: u32 = 100;
+        const FREQUENCY: u32 = 1;
+        // Precomputed sine wave values scaled by 1000 to avoid floating points
+        const SINE_TABLE: [i32; 8] = [0, 707, 1000, 707, 0, -707, -1000, -707];
+        let sine_value = SINE_TABLE[(curr_tick * FREQUENCY) as usize % SINE_TABLE.len()];
+        let y_offset = ((AMPLITUDE as i32 * sine_value) / 1000) as u32;
+        self.entity.position.y = self.entity.position.y.saturating_add_signed(y_offset as i32);
+
+        // let frequency = 0.1; // Adjust the frequency of the sine wave
+        // self.entity.position.y = self.entity.position.y + (amplitude as f32 * (curr_tick as f32 * frequency).sin()) as u32;
 
         // apply velocity decay
         if curr_tick % 50 == 0 {
