@@ -3,6 +3,7 @@ use crate::consts;
 use crate::errors::Result;
 use crate::errors::SimulationError;
 use crate::physics::Collision;
+use crate::world::Bearings;
 use crate::world::GunTypes;
 use crate::world::RaftFighter;
 use crate::world::{Entity, GameState, Position, Projectile, Raft, Velocity};
@@ -15,13 +16,13 @@ use strum_macros::{EnumCount, EnumIter};
 #[cfg_attr(test, derive(PartialEq, Eq, EnumIter, EnumCount))]
 pub enum GameInput {
     NoOp,
-    ShootLeftRaft,
+    DeprecatedShootLeftRaft,
     MoveLeftRaftRight,
     MoveLeftRaftLeft,
-    ShootRightRaft,
+    DeprecatedShootRightRaft,
     MoveRightRaftRight,
     MoveRightRaftLeft,
-    AddProjectile,
+    DeprecatedAddProjectile,
     MoveLeftFastRaftLeft,
     MoveLeftFastRaftRight,
     MoveUpRaftRight,
@@ -36,13 +37,13 @@ impl GameInput {
     /// Will return `Err` if `input` does not exist as a valid game input
     pub const fn from(input: u32) -> Result<Self> {
         match input {
-            0 => Ok(Self::ShootLeftRaft),
+            0 => Ok(Self::DeprecatedShootLeftRaft),
             1 => Ok(Self::MoveLeftRaftRight),
             2 => Ok(Self::MoveLeftRaftLeft),
-            3 => Ok(Self::ShootRightRaft),
+            3 => Ok(Self::DeprecatedShootRightRaft),
             4 => Ok(Self::MoveRightRaftRight),
             5 => Ok(Self::MoveRightRaftLeft),
-            6 => Ok(Self::AddProjectile),
+            6 => Ok(Self::DeprecatedAddProjectile),
             7 => Ok(Self::MoveLeftFastRaftLeft),
             8 => Ok(Self::MoveLeftFastRaftRight),
             9 => Ok(Self::MoveUpRaftRight),
@@ -57,13 +58,13 @@ impl GameInput {
     #[must_use]
     pub const fn to_u32(&self) -> u32 {
         match self {
-            Self::ShootLeftRaft => 0,
+            Self::DeprecatedShootLeftRaft => 0,
             Self::MoveLeftRaftRight => 1,
             Self::MoveLeftRaftLeft => 2,
-            Self::ShootRightRaft => 3,
+            Self::DeprecatedShootRightRaft => 3,
             Self::MoveRightRaftRight => 4,
             Self::MoveRightRaftLeft => 5,
-            Self::AddProjectile => 6,
+            Self::DeprecatedAddProjectile => 6,
             Self::MoveLeftFastRaftLeft => 7,
             Self::MoveLeftFastRaftRight => 8,
             Self::MoveUpRaftRight => 9,
@@ -85,7 +86,6 @@ impl GameState {
                 velocity: consts::NO_VELOCITY,
                 is_active: true,
             },
-            GunTypes::Bazooka,
             Style { color: "#FF0000".to_string() },
         );
 
@@ -115,10 +115,10 @@ impl GameState {
                     velocity: consts::NO_VELOCITY,
                     is_active: true,
                 },
-                GunTypes::SMG,
                 Style { color: "#0000FF".to_string() },
             ),
-            projectiles: vec![],
+            left_projectiles: vec![],
+            right_projectiles: vec![],
             ticks: 0,
         }
     }
@@ -155,93 +155,6 @@ impl GameState {
         for curr_tick in initial_tick..end_tick {
             let raft_left = &mut self.raft_left;
             let raft_right = &mut self.raft_right;
-            let projectiles = &mut self.projectiles;
-
-            // handle input
-            if curr_tick % consts::TICKS_PER_INPUT == 0 {
-                match iter.next() {
-                    None => {
-                        return Err(SimulationError::NoInput {
-                            num_tick: curr_tick,
-                        })
-                    }
-                    Some(input_for_tick) => {
-                        for &curr in input_for_tick {
-                            match GameInput::from(curr) {
-                                Err(e) => return Err(e),
-                                Ok(input) => match input {
-                                    GameInput::NoOp => {}
-                                    GameInput::ShootLeftRaft => {
-                                        let prj = Projectile::create_projectile(
-                                            raft_left.shoots_from(&ShootsFromSide::Right),
-                                            &ProjectileDirection::ArchRight,
-                                            &GunTypes::Bazooka,
-                                        );
-
-                                        projectiles.push(prj);
-                                    }
-                                    GameInput::ShootRightRaft => {
-                                        let prj = Projectile::create_projectile(
-                                            raft_right.shoots_from(&ShootsFromSide::Left),
-                                            &ProjectileDirection::ArchLeft,
-                                            &GunTypes::SMG,
-                                        );
-                                        projectiles.push(prj);
-                                    }
-                                    GameInput::MoveLeftRaftRight => {
-                                        raft_left.entity.velocity.vx = consts::VELOCITY_GAIN_NORMAL;
-                                    }
-                                    GameInput::MoveLeftRaftLeft => {
-                                        raft_left.entity.velocity.vx =
-                                            -consts::VELOCITY_GAIN_NORMAL;
-                                    }
-                                    GameInput::MoveRightRaftRight => {
-                                        raft_right.entity.velocity.vx =
-                                            consts::VELOCITY_GAIN_NORMAL;
-                                    }
-                                    GameInput::MoveUpRaftRight => {
-                                        raft_right.entity.velocity.vy = 
-                                            consts::VELOCITY_GAIN_NORMAL;
-                                    }
-                                    GameInput::MoveRightRaftLeft => {
-                                        raft_right.entity.velocity.vx =
-                                            -consts::VELOCITY_GAIN_NORMAL;
-                                    }
-                                    GameInput::MoveLeftFastRaftLeft => {
-                                        raft_left.entity.velocity.vx = consts::VELOCITY_GAIN_BOOST;
-                                    }
-                                    GameInput::MoveLeftFastRaftRight => {
-                                        raft_right.entity.velocity.vx =
-                                            -consts::VELOCITY_GAIN_BOOST;
-                                    }
-                                    GameInput::AddProjectile => {
-                                        let prj = Projectile::create_projectile(
-                                            Position {
-                                                x: consts::WORLD_MAX_X / 2,
-                                                y: consts::WORLD_MAX_Y
-                                                    - consts::DEFAULT_PROJECTILE_RADIUS * 2
-                                                    - 1,
-                                            },
-                                            &ProjectileDirection::StraightDown,
-                                            &GunTypes::SMG,
-                                        );
-                                        projectiles.push(prj);
-                                    }
-                                    GameInput::MoveRightRaftDown => {
-                                        raft_right.entity.velocity.vy = -consts::VELOCITY_GAIN_NORMAL;
-                                    }
-                                    GameInput::MoveLeftRaftUp => {
-                                        raft_left.entity.velocity.vy = consts::VELOCITY_GAIN_NORMAL;
-                                    }
-                                    GameInput::MoveLeftRaftDown => {
-                                        raft_left.entity.velocity.vy = -consts::VELOCITY_GAIN_NORMAL;
-                                    }
-                                },
-                            };
-                        }
-                    }
-                }
-            }
 
             /*
              * here we first move entities then attempt to detect collision
@@ -272,113 +185,130 @@ impl GameState {
              * the max possible position and will instead remain in its prev valid position
              */
 
-            if raft_left.entity.is_active {
-                // TODO: assess alternative to avoid clone of fighters
-                let prev_entity = raft_left.entity.clone();
-                raft_left.update_position(curr_tick);
-
-                if !is_within_world_bounds(raft_left) {
-                    raft_left.entity = prev_entity;
-                }
-
-                // TODO: make sure fighters move alongside the raft
-                for fighter in &raft_left.raft_fighters {
-                    let fire_rate = match fighter.gun {
-                        GunTypes::SMG => 20,
-                        GunTypes::Bazooka => 500,
-                    };
-
-                    if curr_tick % fire_rate == 0 {
-                        let init_pos = fighter.shoots_from(&ShootsFromSide::Right);
-                        let proj = Projectile::create_projectile(
-                            init_pos,
-                            &ProjectileDirection::ArchRight,
-                            &fighter.gun,
-                        );
-                        projectiles.push(proj);
-                    }
-                }
-
+            if curr_tick % consts::TICKS_PER_INPUT == 0 {
+                handle_input(iter.next(), raft_left, raft_right, curr_tick)?;
             }
 
-            if raft_right.entity.is_active {
-                let prev_entity = raft_right.entity.clone();
-                raft_right.update_position(curr_tick);
+            update_raft(raft_left, curr_tick);
+            update_raft(raft_right, curr_tick);
 
-                if !is_within_world_bounds(raft_right) {
-                    raft_right.entity.position.x = raft_right.entity.position.x.min(consts::WORLD_MAX_X - raft_right.width);
-                    raft_right.entity = prev_entity;
-                }
+            update_fighters(raft_left, &mut self.left_projectiles, Bearings::Northeast, curr_tick);
+            update_fighters(raft_right, &mut self.right_projectiles, Bearings::Northwest, curr_tick);
 
-                // TODO: make sure fighters move alongside the raft
-                for fighter in &raft_right.raft_fighters {
-                    let fire_rate = match fighter.gun {
-                        GunTypes::SMG => 20,
-                        GunTypes::Bazooka => 500,
-                    };
-
-                    if curr_tick % fire_rate == 0 {
-                        let init_pos = fighter.shoots_from(&ShootsFromSide::Left);
-                        let proj = Projectile::create_projectile(
-                            init_pos,
-                            &ProjectileDirection::ArchLeft,
-                            &fighter.gun,
-                        );
-                        projectiles.push(proj);
-                    }
-                }
-            }
-
-            for item in &mut *projectiles {
-                item.update_position(curr_tick);
-
-                // TODO: do quick x check to separate left and right and cut collision checks in half
-                for fighter in &mut *raft_left.raft_fighters {
-                    if item.collides_with(fighter) {
-                        fighter.curr_health = fighter
-                            .curr_health
-                            .saturating_sub(item.calculate_dmg_fighter(fighter));
-                        item.entity.is_active = false;
-                    }
-                }
-
-                for fighter in &mut *raft_right.raft_fighters {
-                    if item.collides_with(fighter) {
-                        fighter.curr_health = fighter
-                            .curr_health
-                            .saturating_sub(item.calculate_dmg_fighter(fighter));
-                        item.entity.is_active = false;
-                    }
-                }
-
-                if item.collides_with(raft_right) {
-                    raft_right.curr_health = raft_right
-                        .curr_health
-                        .saturating_sub(item.calculate_dmg(raft_right));
-                    item.entity.is_active = false;
-                }
-
-                if item.collides_with(raft_left) {
-                    raft_left.curr_health = raft_left
-                        .curr_health
-                        .saturating_sub(item.calculate_dmg(raft_left));
-                    item.entity.is_active = false;
-                }
-
-                if !is_within_world_bounds(item) {
-                    item.entity.is_active = false;
-                }
-            }
-
-            projectiles.retain(|p| p.entity.is_active);
-            raft_left.raft_fighters.retain(|f| f.entity.is_active);
-            raft_right.raft_fighters.retain(|f| f.entity.is_active);
+            update_projectiles(&mut self.left_projectiles, raft_right, curr_tick);
+            update_projectiles(&mut self.right_projectiles, raft_left, curr_tick);
 
             self.ticks += 1;
         }
         Ok(())
     }
 }
+
+
+fn handle_input(
+    input_for_tick: Option<&Vec<u32>>,
+    raft_left: &mut Raft,
+    raft_right: &mut Raft,
+    curr_tick: u32,
+) -> Result<()> {
+    let input_for_tick = input_for_tick.ok_or(SimulationError::NoInput {
+        num_tick: curr_tick,
+    })?;
+
+    for &curr in input_for_tick {
+        match GameInput::from(curr)? {
+            GameInput::NoOp => {}
+            GameInput::DeprecatedShootLeftRaft => {}
+            GameInput::DeprecatedShootRightRaft => {}
+            GameInput::MoveLeftRaftRight => {
+                raft_left.entity.velocity.vx = consts::VELOCITY_GAIN_NORMAL;
+            }
+            GameInput::MoveLeftRaftLeft => {
+                raft_left.entity.velocity.vx = -consts::VELOCITY_GAIN_NORMAL;
+            }
+            GameInput::MoveRightRaftRight => {
+                raft_right.entity.velocity.vx = consts::VELOCITY_GAIN_NORMAL;
+            }
+            GameInput::MoveUpRaftRight => {
+                raft_right.entity.velocity.vy = consts::VELOCITY_GAIN_NORMAL;
+            }
+            GameInput::MoveRightRaftLeft => {
+                raft_right.entity.velocity.vx = -consts::VELOCITY_GAIN_NORMAL;
+            }
+            GameInput::MoveLeftFastRaftLeft => {
+                raft_left.entity.velocity.vx = consts::VELOCITY_GAIN_BOOST;
+            }
+            GameInput::MoveLeftFastRaftRight => {
+                raft_right.entity.velocity.vx = -consts::VELOCITY_GAIN_BOOST;
+            }
+            GameInput::DeprecatedAddProjectile => {}
+            GameInput::MoveRightRaftDown => {
+                raft_right.entity.velocity.vy = -consts::VELOCITY_GAIN_NORMAL;
+            }
+            GameInput::MoveLeftRaftUp => {
+                raft_left.entity.velocity.vy = consts::VELOCITY_GAIN_NORMAL;
+            }
+            GameInput::MoveLeftRaftDown => {
+                raft_left.entity.velocity.vy = -consts::VELOCITY_GAIN_NORMAL;
+            }
+        };
+    }
+    Ok(())
+}
+
+fn update_raft(raft: &mut Raft, curr_tick: u32) {
+    let prev_entity = raft.entity.clone();
+    raft.update_position(curr_tick);
+
+    if !is_within_world_bounds(raft) {
+        raft.entity = prev_entity;
+    }
+}
+
+fn update_fighters(raft: &mut Raft, projectiles: &mut Vec<Projectile>, direction: Bearings,curr_tick: u32) {
+    if raft.entity.is_active {
+        for fighter in &raft.raft_fighters {
+            let fire_rate = fighter.gun.fire_rate();
+            if curr_tick % fire_rate == 0 {
+                let proj = fighter.create_projectile(direction);
+                projectiles.push(proj);
+            }
+        }
+
+        raft.raft_fighters.retain(|f| f.entity.is_active);
+    }
+}
+
+fn update_projectiles(projectiles: &mut Vec<Projectile>, opposing_raft: &mut Raft, curr_tick: u32) {
+    for item in projectiles.iter_mut() {
+        item.update_position(curr_tick);
+
+        // Check for collisions with opposing raft fighters
+        for fighter in &mut opposing_raft.raft_fighters {
+            if item.collides_with(fighter) {
+                fighter.take_damage(item);
+                item.entity.is_active = false;
+            }
+        }
+
+        // Check for collisions with the opposing raft
+        if item.collides_with(opposing_raft) {
+            opposing_raft.take_damage(item);
+            item.entity.is_active = false;
+        }
+
+        // Check if the projectile is within world bounds
+        if !is_within_world_bounds(item) {
+            item.entity.is_active = false;
+        }
+    }
+
+    // Retain only active projectiles
+    projectiles.retain(|p| p.entity.is_active);
+}
+
+
+
 
 impl Default for GameState {
     fn default() -> Self {
@@ -390,51 +320,6 @@ pub enum ProjectileDirection {
     ArchRight,
     ArchLeft,
     StraightDown,
-}
-impl Projectile {
-    pub fn create_projectile(init_pos: Position, direction: &ProjectileDirection, gun: &GunTypes) -> Self {
-        let (radius, velocity) = match gun {
-            GunTypes::Bazooka => (consts::DEFAULT_PROJECTILE_RADIUS * 2, Velocity { vx: 5, vy: 5 }),
-            GunTypes::SMG => (consts::DEFAULT_PROJECTILE_RADIUS, Velocity { vx: 10, vy: 10 }),
-        };
-
-        let style = gun.style();
-
-        Self {
-            radius,
-            entity: Entity {
-                position: init_pos,
-                velocity: match direction {
-                    ProjectileDirection::ArchLeft => Velocity { vx: -velocity.vx, vy: velocity.vy },
-                    ProjectileDirection::ArchRight => velocity,
-                    ProjectileDirection::StraightDown => Velocity { vx: 0, vy: -velocity.vy },
-                },
-                is_active: true,
-            },
-            style,
-        }
-    }
-
-    #[must_use]
-    pub const fn calculate_dmg(&self, raft: &Raft) -> u32 {
-        if raft.curr_health > 0 {
-            let perc = raft.max_health / raft.curr_health;
-            self.radius * perc
-        } else {
-            0
-        }
-    }
-
-    // TODO: DRY up this code with raft calculate dmg above
-    #[must_use]
-    pub const fn calculate_dmg_fighter(&self, raft_fighter: &RaftFighter) -> u32 {
-        if raft_fighter.curr_health > 0 {
-            let perc = raft_fighter.max_health / raft_fighter.curr_health;
-            self.radius * perc
-        } else {
-            0
-        }
-    }
 }
 
 const fn tick_inputs_needed(ticks_to_process: u32) -> u32 {
@@ -452,30 +337,8 @@ fn is_within_world_bounds<T: Collision>(obj: &T) -> bool {
     x > 0 && y > 0 && x + width < consts::WORLD_MAX_X && y + height < consts::WORLD_MAX_Y
 }
 
-pub enum ShootsFromSide {
-    Left,
-    Right,
-}
 
 impl Raft {
-    #[must_use]
-    pub const fn shoots_from(&self, side: &ShootsFromSide) -> Position {
-        match side {
-            ShootsFromSide::Right => Position {
-                x: self.entity.position.x + self.width + consts::DEFAULT_PROJECTILE_RADIUS * 2,
-                y: self.entity.position.y + self.height + consts::DEFAULT_PROJECTILE_RADIUS * 2,
-            },
-            ShootsFromSide::Left => Position {
-                x: self
-                    .entity
-                    .position
-                    .x
-                    .saturating_sub(consts::DEFAULT_PROJECTILE_RADIUS),
-                y: self.entity.position.y + self.height + consts::DEFAULT_PROJECTILE_RADIUS * 2,
-            },
-        }
-    }
-
     pub fn position_fighters(&mut self, fighters: Vec<RaftFighter>) {
         for fighter in fighters {
             let (fx, fy, fw, fh) = fighter.bounding_box();
@@ -497,18 +360,51 @@ impl Raft {
             }
         }
     }
+
+    pub fn take_damage(&mut self, projectile: &Projectile) {
+        if self.curr_health > 0 {
+            let perc = self.max_health / self.curr_health;
+            let dmg = projectile.radius * perc;
+            
+            self.curr_health = self.curr_health.saturating_sub(dmg);
+            
+            if self.curr_health == 0 {
+                self.entity.is_active = false;
+            }
+        }
+    }
 }
 
 impl RaftFighter {
-    // TODO: DRY UP
-    #[must_use]
-    pub const fn shoots_from(&self, side: &ShootsFromSide) -> Position {
-        match side {
-            ShootsFromSide::Right => Position {
+    pub fn take_damage(&mut self, projectile: &Projectile) {
+        if self.curr_health > 0 {
+            let perc = self.max_health / self.curr_health;
+            let dmg = projectile.radius * perc;
+            
+            self.curr_health = self.curr_health.saturating_sub(dmg);
+            
+            if self.curr_health == 0 {
+                self.entity.is_active = false;
+            }
+        }
+    }
+
+    pub fn create_projectile(&self, side: Bearings) -> Projectile {
+        let (radius, base_velocity) = match self.gun {
+            GunTypes::Bazooka => (consts::DEFAULT_PROJECTILE_RADIUS * 2, 5),
+            GunTypes::SMG => (consts::DEFAULT_PROJECTILE_RADIUS, 10),
+            GunTypes::FlameThrower => (consts::DEFAULT_PROJECTILE_RADIUS, 8),
+            GunTypes::StraightShooter => (consts::DEFAULT_PROJECTILE_RADIUS, 12),
+        };
+
+        let style = self.gun.style();
+
+        let init_pos = match side {
+            Bearings::East => Position {
                 x: self.entity.position.x + self.width + consts::DEFAULT_PROJECTILE_RADIUS * 2,
                 y: self.entity.position.y + self.height + consts::DEFAULT_PROJECTILE_RADIUS * 2,
             },
-            ShootsFromSide::Left => Position {
+            Bearings::West => Position {
                 x: self
                     .entity
                     .position
@@ -516,6 +412,31 @@ impl RaftFighter {
                     .saturating_sub(consts::DEFAULT_PROJECTILE_RADIUS),
                 y: self.entity.position.y + self.height + consts::DEFAULT_PROJECTILE_RADIUS * 2,
             },
+            _ => Position {
+                x: self.entity.position.x,
+                y: self.entity.position.y,
+            },
+        };
+
+        let velocity = match side {
+            Bearings::North => Velocity { vx: 0, vy: -base_velocity },
+            Bearings::South => Velocity { vx: 0, vy: base_velocity },
+            Bearings::East => Velocity { vx: base_velocity, vy: 0 },
+            Bearings::West => Velocity { vx: -base_velocity, vy: 0 },
+            Bearings::Northeast => Velocity { vx: base_velocity, vy: -base_velocity },
+            Bearings::Northwest => Velocity { vx: -base_velocity, vy: -base_velocity },
+            Bearings::Southeast => Velocity { vx: base_velocity, vy: base_velocity },
+            Bearings::Southwest => Velocity { vx: -base_velocity, vy: base_velocity },
+        };
+
+        Projectile {
+            radius,
+            entity: Entity {
+                position: init_pos,
+                velocity: velocity,
+                is_active: true,
+            },
+            style,
         }
     }
 }
@@ -573,15 +494,15 @@ mod tests {
 
         for i in 0..inputs_needed {
             inputs.push(match i % 33 {
-                0 => GameInput::ShootLeftRaft.to_u32(),
+                0 => GameInput::DeprecatedShootLeftRaft.to_u32(),
                 1 => GameInput::MoveLeftRaftRight.to_u32(),
                 2 => GameInput::MoveLeftRaftLeft.to_u32(),
-                3 => GameInput::ShootRightRaft.to_u32(),
+                3 => GameInput::DeprecatedShootRightRaft.to_u32(),
                 4 => GameInput::MoveRightRaftRight.to_u32(),
                 5 => GameInput::MoveRightRaftLeft.to_u32(),
-                6 => GameInput::AddProjectile.to_u32(),
+                6 => GameInput::DeprecatedAddProjectile.to_u32(),
                 // repeat values so they occur more often
-                7 => GameInput::AddProjectile.to_u32(),
+                7 => GameInput::DeprecatedAddProjectile.to_u32(),
                 8 => GameInput::MoveLeftRaftRight.to_u32(),
                 _ => GameInput::NoOp.to_u32(),
             });

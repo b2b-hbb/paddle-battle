@@ -1,8 +1,18 @@
 use serde::{Deserialize, Serialize};
 
 use crate::consts;
-use crate::consts::DEFAULT_RAFT_HEIGHT;
-use crate::physics::Collision;
+
+#[derive(Debug, Clone, Copy)]
+pub enum Bearings {
+    North,
+    South,
+    East,
+    West,
+    Northeast,
+    Northwest,
+    Southeast,
+    Southwest,
+}
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Position {
@@ -28,6 +38,8 @@ pub struct Entity {
 pub enum GunTypes {
     Bazooka,
     SMG,
+    FlameThrower,
+    StraightShooter,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -42,17 +54,10 @@ pub struct Raft {
     pub height: u32,
     pub max_health: u32,
     pub curr_health: u32,
-    pub gun: GunTypes,
     pub raft_fighters: Vec<RaftFighter>,
     pub style: Style,
 }
 
-// Define projectile types
-pub enum ProjectileType {
-    Small,
-    Medium,
-    Large,
-}
 // Update RaftFighter to include health tracking
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RaftFighter {
@@ -63,6 +68,18 @@ pub struct RaftFighter {
     pub curr_health: u32,
     pub max_health: u32,
     pub style: Style,
+}
+
+impl GunTypes {
+    #[must_use]
+    pub fn fire_rate(&self) -> u32 {
+        match self {
+            GunTypes::SMG => 20,
+            GunTypes::Bazooka => 500,
+            GunTypes::FlameThrower => 100,
+            GunTypes::StraightShooter => 100,
+        }
+    }
 }
 
 impl RaftFighter {
@@ -78,13 +95,6 @@ impl RaftFighter {
             style,
         }
     }
-
-    pub fn take_damage(&mut self, damage: u32) {
-        self.curr_health = self.curr_health.saturating_sub(damage);
-        if self.curr_health == 0 {
-            self.entity.is_active = false;
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -95,14 +105,13 @@ pub struct Projectile {
 }
 
 impl Raft {
-    pub fn new(entity: Entity, gun: GunTypes, style: Style) -> Self {
+    pub fn new(entity: Entity, style: Style) -> Self {
         Self {
             entity,
             width: consts::DEFAULT_RAFT_WIDTH,
             height: consts::DEFAULT_RAFT_HEIGHT,
             max_health: consts::DEFAULT_RAFT_HEALTH,
             curr_health: consts::DEFAULT_RAFT_HEALTH,
-            gun,
             raft_fighters: vec![],
             style,
         }
@@ -124,6 +133,8 @@ impl GunTypes {
         let color = match self {
             GunTypes::Bazooka => "#FF0000",
             GunTypes::SMG => "#00FF00",
+            GunTypes::FlameThrower => "#FFA500",
+            GunTypes::StraightShooter => "#0000FF",
         };
 
         Style { color: color.to_string() }
@@ -134,7 +145,8 @@ impl GunTypes {
 pub struct GameState {
     pub raft_left: Raft,
     pub raft_right: Raft,
-    pub projectiles: Vec<Projectile>,
+    pub left_projectiles: Vec<Projectile>,
+    pub right_projectiles: Vec<Projectile>,
     pub ticks: u32,
 }
 

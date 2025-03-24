@@ -9,7 +9,6 @@ pub const VELOCITY_GAIN_BOOST: i32 = 50;
 
 pub const DEFAULT_RAFT_HEALTH: u32 = 10_000;
 
-
 pub const DEFAULT_RAFT_WIDTH: u32 = WORLD_MAX_X / 4;
 pub const DEFAULT_RAFT_HEIGHT: u32 = WORLD_MAX_Y / 10;
 

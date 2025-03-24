@@ -115,14 +115,11 @@ impl Projectile {
             .position
             .x
             .saturating_add_signed(self.entity.velocity.vx);
-        self.entity.position.y = self
-            .entity
-            .position
-            .y
-            .saturating_add_signed(self.entity.velocity.vy);
 
-        // apply gravity
-        self.entity.velocity.vy -= 1;
+        // apply sine wave to y position
+        let amplitude = 10; // Adjust the amplitude of the sine wave
+        let frequency = 0.1; // Adjust the frequency of the sine wave
+        self.entity.position.y = self.entity.position.y + (amplitude as f32 * (curr_tick as f32 * frequency).sin()) as u32;
 
         // apply velocity decay
         if curr_tick % 50 == 0 {
