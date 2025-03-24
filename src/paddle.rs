@@ -355,7 +355,7 @@ impl Raft {
             let overlap_area = overlap_x * overlap_y;
 
             // Check if the overlap area is at least a certain percentage of the fighter's area
-            if overlap_area as f32 / fighter_area as f32 >= 0.05 { // Assuming 5% overlap is required
+            if overlap_area * 100 >= fighter_area * 5 { // Assuming 5% overlap is required
                 self.raft_fighters.push(fighter.clone());
             }
         }

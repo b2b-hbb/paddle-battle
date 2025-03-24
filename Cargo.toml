@@ -7,7 +7,7 @@ edition = "2021"
 alloy-primitives = "0.3.1"
 alloy-sol-types = "0.3.1"
 mini-alloc = "0.4.2"
-stylus-sdk = {version = "0.4.3", optional = true}
+stylus-sdk = {version = "0.8.3", optional = true}
 hex = "0.4.3"
 serde = { version = "1.0.198", features = ["derive"] }
 wasm-bindgen = { version = "0.2.92", optional = true }
