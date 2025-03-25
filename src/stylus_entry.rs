@@ -6,17 +6,17 @@ use stylus_sdk::{alloy_primitives::U256, prelude::*};
 use crate::world::GameState;
 
 // Define some persistent storage using the Solidity ABI.
-// `Counter` will be the entrypoint.
+// `PaddleBattle` will be the entrypoint.
 sol_storage! {
     #[entrypoint]
-    pub struct Counter {
+    pub struct PaddleBattle {
         uint256 number;
     }
 }
 
-/// Declare that `Counter` is a contract with the following external methods.
+/// Declare that `PaddleBattle` is a contract with the following external methods.
 #[public]
-impl Counter {
+impl PaddleBattle {
     /// Gets the number from storage.
     pub fn number(&self) -> U256 {
         self.number.get()

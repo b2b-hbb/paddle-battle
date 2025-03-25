@@ -1,0 +1,22 @@
+[package]
+name = "stylus-test"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1.0", features = ["full"] }
+eyre = "0.6.8"
+
+toml = "0.8.13"
+
+ alloy = { version = "=0.7.3", features = [
+  "contract",
+  "network",
+  "providers",
+  "provider-http",
+  "rpc-client",
+  "rpc-types-eth",
+  "signer-local",
+  "getrandom",
+ ] }
+regex = "1.11.1"

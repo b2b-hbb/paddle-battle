@@ -27,7 +27,7 @@ pub enum GameInput {
     MoveLeftFastRaftRight,
     MoveUpRaftRight,
     MoveRightRaftDown,
-    MoveLeftRaftUp,
+    MoveUpRaftLeft,
     MoveLeftRaftDown,
 }
 
@@ -48,7 +48,7 @@ impl GameInput {
             8 => Ok(Self::MoveLeftFastRaftRight),
             9 => Ok(Self::MoveUpRaftRight),
             10 => Ok(Self::MoveRightRaftDown),
-            11 => Ok(Self::MoveLeftRaftUp),
+            11 => Ok(Self::MoveUpRaftLeft),
             12 => Ok(Self::MoveLeftRaftDown),
             86 => Ok(Self::NoOp),
             received => Err(SimulationError::InvalidInput { received }),
@@ -69,7 +69,7 @@ impl GameInput {
             Self::MoveLeftFastRaftRight => 8,
             Self::MoveUpRaftRight => 9,
             Self::MoveRightRaftDown => 10,
-            Self::MoveLeftRaftUp => 11,
+            Self::MoveUpRaftLeft => 11,
             Self::MoveLeftRaftDown => 12,
             Self::NoOp => 86,
         }
@@ -245,7 +245,7 @@ fn handle_input(
             GameInput::MoveRightRaftDown => {
                 raft_right.entity.velocity.vy = -consts::VELOCITY_GAIN_NORMAL;
             }
-            GameInput::MoveLeftRaftUp => {
+            GameInput::MoveUpRaftLeft => {
                 raft_left.entity.velocity.vy = consts::VELOCITY_GAIN_NORMAL;
             }
             GameInput::MoveLeftRaftDown => {

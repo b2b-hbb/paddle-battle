@@ -1,8 +1,12 @@
-.PHONY: test web-build stylus-check website-install website-start clean
+.PHONY: test web-build stylus-check website-install website-start clean test-stylus
 
 # Run cargo tests
 test:
 	cargo test --lib
+
+# Run stylus integration tests
+integration:
+	cd stylus-test && cargo test
 
 # Build web assets
 web:
