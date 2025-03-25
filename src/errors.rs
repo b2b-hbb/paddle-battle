@@ -1,22 +1,20 @@
 use std::fmt;
 
-use alloy_primitives::U256;
-
 pub type Result<T> = std::result::Result<T, SimulationError>;
 
 #[derive(Debug)]
 pub enum SimulationError {
     InvalidInput {
-        received: U256,
+        received: u32,
     },
     NoInput {
-        num_tick: U256,
+        num_tick: u32,
     },
     InvalidInputLength {
-        received: U256,
-        expected: U256,
-        initial_tick: U256,
-        end_tick: U256,
+        received: u32,
+        expected: u32,
+        initial_tick: u32,
+        end_tick: u32,
     },
     USizeToU32Conversion {},
 }

@@ -39,57 +39,28 @@ const buttonPressed = {
 
 type TKeyButtonPressed = keyof typeof buttonPressed
 
-const LoadScreen: React.FC<{ onStart: (leftGun: string, rightGun: string, replayInputs?: number[]) => void }> = ({ onStart }) => {
-    const [replayInput, setReplayInput] = useState('');
-
-    const handleStart = () => {
-        if (replayInput) {
-            try {
-                const replayInputs = JSON.parse(replayInput);
-                // Default guns for replay mode
-                onStart('Bazooka', 'SMG', replayInputs);
-            } catch (e) {
-                alert('Invalid replay input format. Please enter a valid array of numbers, e.g. [0, 5, 4]');
-            }
-        } else {
-            alert('Please enter replay inputs to continue');
-        }
-    };
+const LoadScreen: React.FC<{ onStart: (leftGun: string, rightGun: string) => void }> = ({ onStart }) => {
+    const [leftGun, setLeftGun] = useState('Bazooka');
+    const [rightGun, setRightGun] = useState('SMG');
 
     return (
-        <div style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            alignItems: 'center', 
-            gap: '20px',
-            padding: '20px' 
-        }}>
-            <h2>Paddle Battle Replay Mode</h2>
-            <div style={{ width: '100%', maxWidth: '500px' }}>
-                <label style={{ display: 'block', marginBottom: '10px' }}>Enter Replay Inputs:</label>
-                <textarea 
-                    value={replayInput} 
-                    onChange={(e) => setReplayInput(e.target.value)}
-                    placeholder="Enter array of numbers, e.g. [0, 5, 4]"
-                    style={{
-                        width: '100%',
-                        height: '100px',
-                        padding: '10px',
-                        marginBottom: '10px',
-                        fontFamily: 'monospace'
-                    }}
-                />
+        <div>
+            <h2>Select Guns for Raft Fighters</h2>
+            <div>
+                <label>Left Raft Gun:</label>
+                <select value={leftGun} onChange={(e) => setLeftGun(e.target.value)}>
+                    <option value="Bazooka">Bazooka</option>
+                    <option value="SMG">SMG</option>
+                </select>
             </div>
-            <button 
-                onClick={handleStart}
-                style={{
-                    padding: '10px 20px',
-                    fontSize: '16px',
-                    cursor: 'pointer'
-                }}
-            >
-                Start Replay
-            </button>
+            <div>
+                <label>Right Raft Gun:</label>
+                <select value={rightGun} onChange={(e) => setRightGun(e.target.value)}>
+                    <option value="Bazooka">Bazooka</option>
+                    <option value="SMG">SMG</option>
+                </select>
+            </div>
+            <button onClick={() => onStart(leftGun, rightGun)}>Start Game</button>
         </div>
     );
 };
@@ -104,8 +75,6 @@ const PaddleGame: React.FC = () => {
   const [gameStarted, setGameStarted] = useState(false);
   const [leftGun, setLeftGun] = useState('Bazooka');
   const [rightGun, setRightGun] = useState('SMG');
-  const replayInputsRef = useRef<number[] | undefined>(undefined);
-  const replayIndexRef = useRef<number>(0);
 
   function drawGame(ctx: CanvasRenderingContext2D, gameState: GameState) {
     console.log('drawGame called');
@@ -185,15 +154,11 @@ const PaddleGame: React.FC = () => {
     if (!wasmRef.current || !canvasRef.current) {
       throw new Error("missing wasmref or canvasref in game loop");
     }
-    
+
     const now = Date.now();
     const elapsed = now - lastDrawTimeRef.current;
-    
+
     if (elapsed > FPS_IN_MS) {
-      // Check if we're in replay mode and have exhausted all inputs
-      if (replayInputsRef.current && replayIndexRef.current >= replayInputsRef.current.length) {
-        return; // Stop execution completely
-      }
       lastDrawTimeRef.current = now - (elapsed % FPS_IN_MS);
 
       const ctx = canvasRef.current.getContext('2d');
@@ -201,32 +166,26 @@ const PaddleGame: React.FC = () => {
         throw new Error("missing canvas in game loop");
       }
       ctx.setTransform(1, 0, 0, -1, 0, canvasRef.current.height);
+      console.log('Canvas transformation set:', ctx.getTransform());
 
-      let inputCodes: number[] = [];
+      const inputCodes: number[] = [];
 
-      if (replayInputsRef.current) {
-        // In replay mode, use the pre-recorded inputs
-        if (replayIndexRef.current < replayInputsRef.current.length) {
-          inputCodes.push(replayInputsRef.current[replayIndexRef.current]);
-          replayIndexRef.current++;
-        }
-      } else {
-        // Normal gameplay mode
-        if (buttonPressed["s"] || buttonPressed["S"]) inputCodes.push(0);
-        if (buttonPressed["d"] || buttonPressed["D"]) inputCodes.push(1);
-        if (buttonPressed["a"] || buttonPressed["A"]) inputCodes.push(2);
-        if (buttonPressed["ArrowDown"]) inputCodes.push(3);
-        if (buttonPressed["ArrowRight"]) inputCodes.push(4);
-        if (buttonPressed["ArrowLeft"]) inputCodes.push(5);
-        if (buttonPressed["p"] || buttonPressed["P"]) inputCodes.push(6);
-        if (buttonPressed["z"] || buttonPressed["Z"]) inputCodes.push(7);
-        if (buttonPressed[" "]) inputCodes.push(8);
-        if (buttonPressed["ArrowUp"]) inputCodes.push(9);
-        if (buttonPressed["ArrowDown"]) inputCodes.push(10);
-        if (buttonPressed["w"]) inputCodes.push(11);
-        if (buttonPressed["s"]) inputCodes.push(12);
-        if (buttonPressed["Escape"]) inputCodes.push(86);
-      }
+      // TODO: iterate over keys of buttonPressed with TKeyButtonPressed and leverage a switch case with typescript ensuring the check is exhaustive
+      // this will ensure keypresses are maintained correctly
+      if (buttonPressed["s"] || buttonPressed["S"]) inputCodes.push(0);
+      if (buttonPressed["d"] || buttonPressed["D"]) inputCodes.push(1);
+      if (buttonPressed["a"] || buttonPressed["A"]) inputCodes.push(2);
+      if (buttonPressed["ArrowDown"]) inputCodes.push(3);
+      if (buttonPressed["ArrowRight"]) inputCodes.push(4);
+      if (buttonPressed["ArrowLeft"]) inputCodes.push(5);
+      if (buttonPressed["p"] || buttonPressed["P"]) inputCodes.push(6);
+      if (buttonPressed["z"] || buttonPressed["Z"]) inputCodes.push(7);
+      if (buttonPressed[" "]) inputCodes.push(8);
+      if (buttonPressed["ArrowUp"]) inputCodes.push(9);
+      if (buttonPressed["ArrowDown"]) inputCodes.push(10);
+      if (buttonPressed["w"]) inputCodes.push(11);
+      if (buttonPressed["s"]) inputCodes.push(12);
+      if (buttonPressed["Escape"]) inputCodes.push(86);
 
       while (inputCodes.length < TICK_INPUT_API_CHUNK_SIZE) {
         inputCodes.push(86);
@@ -249,17 +208,7 @@ const PaddleGame: React.FC = () => {
       tickCounterRef.current = end_tick;
     }
 
-    console.log({
-      here: "here",
-      replayInputs: replayInputsRef.current,
-      replayIndex: replayIndexRef.current,
-      replayInputsLength: replayInputsRef.current ? replayInputsRef.current.length : 0
-    });
-
-    // Only continue the animation frame if we're not in replay mode or still have inputs left
-    if (!replayInputsRef.current || replayIndexRef.current < replayInputsRef.current.length) {
-      requestAnimationFrame(gameLoop);
-    }
+    requestAnimationFrame(gameLoop);
   };
 
 
@@ -275,12 +224,10 @@ const PaddleGame: React.FC = () => {
     }
   };
 
-  const startGame = (leftGun: string, rightGun: string, replayInputs?: number[]) => {
+  const startGame = (leftGun: string, rightGun: string) => {
     if (!gameStarted) {
       setLeftGun(leftGun);
       setRightGun(rightGun);
-      replayInputsRef.current = replayInputs;
-      replayIndexRef.current = 0;
       setGameStarted(true);
     }
   };

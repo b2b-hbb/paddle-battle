@@ -15,5 +15,3 @@ pub mod errors;
 pub mod physics;
 
 pub mod paddle;
-
-mod serde_impl;

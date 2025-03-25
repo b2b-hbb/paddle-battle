@@ -1,10 +1,6 @@
 use serde::{Deserialize, Serialize};
 
 use crate::consts;
-use alloy_primitives::U256;
-use alloy_primitives::I256;
-use crate::serde_impl::{U256Def, I256Def};
-
 
 #[derive(Debug, Clone, Copy)]
 pub enum Bearings {
@@ -19,25 +15,18 @@ pub enum Bearings {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-#[serde(crate = "serde")]
 pub struct Position {
-    #[serde(with = "U256Def")]
-    pub x: U256,
-    #[serde(with = "U256Def")]
-    pub y: U256,
+    pub x: u32,
+    pub y: u32,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-#[serde(crate = "serde")]
 pub struct Velocity {
-    #[serde(with = "I256Def")]
-    pub vx: I256,
-    #[serde(with = "I256Def")]
-    pub vy: I256,
+    pub vx: i32,
+    pub vy: i32,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-#[serde(crate = "serde")]
 pub struct Entity {
     pub position: Position,
     pub velocity: Velocity,
@@ -61,30 +50,23 @@ pub struct Style {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Raft {
     pub entity: Entity,
-    #[serde(with = "U256Def")]
-    pub width: U256,
-    #[serde(with = "U256Def")]
-    pub height: U256,
-    #[serde(with = "U256Def")]
-    pub max_health: U256,
-    #[serde(with = "U256Def")]
-    pub curr_health: U256,
+    pub width: u32,
+    pub height: u32,
+    pub max_health: u32,
+    pub curr_health: u32,
     pub raft_fighters: Vec<RaftFighter>,
     pub style: Style,
 }
 
+// Update RaftFighter to include health tracking
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RaftFighter {
     pub entity: Entity,
-    #[serde(with = "U256Def")]
-    pub width: U256,
-    #[serde(with = "U256Def")]
-    pub height: U256,
+    pub width: u32,
+    pub height: u32,
     pub gun: GunTypes,
-    #[serde(with = "U256Def")]
-    pub curr_health: U256,
-    #[serde(with = "U256Def")]
-    pub max_health: U256,
+    pub curr_health: u32,
+    pub max_health: u32,
     pub style: Style,
 }
 
@@ -101,26 +83,24 @@ impl GunTypes {
 }
 
 impl RaftFighter {
-    pub fn new(entity: Entity, gun: GunTypes, width: U256, height: U256) -> Self {
+    pub fn new(entity: Entity, gun: GunTypes, width: u32, height: u32) -> Self {
         let style = gun.style();
         Self {
             entity,
             width,
             height,
             gun,
-            curr_health: U256::from(consts::DEFAULT_RAFT_HEALTH),
-            max_health: U256::from(consts::DEFAULT_RAFT_HEALTH),
+            curr_health: consts::DEFAULT_RAFT_HEALTH,
+            max_health: consts::DEFAULT_RAFT_HEALTH,
             style,
         }
     }
 }
 
-// #[derive(Serialize, Deserialize, Clone)]
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Projectile {
     pub entity: Entity,
-    #[serde(with = "U256Def")]
-    pub radius: U256,
+    pub radius: u32,
     pub style: Style,
 }
 
@@ -128,10 +108,10 @@ impl Raft {
     pub fn new(entity: Entity, style: Style) -> Self {
         Self {
             entity,
-            width: U256::from(consts::DEFAULT_RAFT_WIDTH),
-            height: U256::from(consts::DEFAULT_RAFT_HEIGHT),
-            max_health: U256::from(consts::DEFAULT_RAFT_HEALTH),
-            curr_health: U256::from(consts::DEFAULT_RAFT_HEALTH),
+            width: consts::DEFAULT_RAFT_WIDTH,
+            height: consts::DEFAULT_RAFT_HEIGHT,
+            max_health: consts::DEFAULT_RAFT_HEALTH,
+            curr_health: consts::DEFAULT_RAFT_HEALTH,
             raft_fighters: vec![],
             style,
         }
@@ -162,18 +142,16 @@ impl GunTypes {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-#[serde(crate = "serde")]
 pub struct GameState {
     pub raft_left: Raft,
     pub raft_right: Raft,
     pub left_projectiles: Vec<Projectile>,
     pub right_projectiles: Vec<Projectile>,
-    #[serde(with = "U256Def")]
-    pub ticks: U256,
+    pub ticks: u32,
 }
 
 impl Projectile {
-    pub fn new(entity: Entity, radius: U256, gun: GunTypes) -> Self {
+    pub fn new(entity: Entity, radius: u32, gun: GunTypes) -> Self {
         let style = gun.style();
         Self {
             entity,

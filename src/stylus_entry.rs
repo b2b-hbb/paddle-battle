@@ -11,7 +11,6 @@ sol_storage! {
     #[entrypoint]
     pub struct PaddleBattle {
         uint256 number;
-        // GameState game_state;
     }
 }
 
@@ -46,7 +45,7 @@ impl PaddleBattle {
         clippy::needless_pass_by_value,
         clippy::uninlined_format_args
     )]
-    pub fn tick(&mut self, num_ticks: U256, inputs: Vec<U256>) {
+    pub fn tick(&mut self, num_ticks: u32, inputs: Vec<u32>) {
         let mut state = GameState::new();
         
         state.tick(num_ticks, &inputs).unwrap_or_else(|e| panic!("SimulationError: {:?}", e));

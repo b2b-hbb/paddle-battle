@@ -100,7 +100,6 @@ async fn integration_test() {
     assert_eq!(log.rightRaftHealth, U256::from(9_500));
     assert_eq!(log.leftProjectileCount, U256::from(45));
     assert_eq!(log.rightProjectileCount, U256::from(0));
-    assert_eq!(final_inputs.len(), 2000);
-    
+
     assert_eq!(receipt.gas_used, 756_148);
 } 
