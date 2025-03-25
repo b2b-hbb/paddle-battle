@@ -4,10 +4,20 @@ version = "0.1.5"
 edition = "2021"
 
 [dependencies]
-alloy-primitives = "0.3.1"
-alloy-sol-types = "0.3.1"
-mini-alloc = "0.4.2"
-stylus-sdk = {version = "0.8.3", optional = true}
+
+stylus-sdk = { version = "0.8.3", optional = true, default-features = true, features = [
+  "mini-alloc"
+] }
+
+# Even though `alloy` includes `alloy-primitives` and `alloy-sol-types` we need
+# to keep both versions for compatibility with the Stylus SDK. Once they start
+# using `alloy` we can remove these.
+alloy-primitives = { version = "=0.8.20", default-features = false }
+alloy-sol-types = { version = "=0.8.20", default-features = false }
+alloy-sol-macro = { version = "=0.8.20", default-features = false }
+alloy-sol-macro-expander = { version = "=0.8.20", default-features = false }
+alloy-sol-macro-input = { version = "=0.8.20", default-features = false }
+
 hex = "0.4.3"
 serde = { version = "1.0.198", features = ["derive"] }
 wasm-bindgen = { version = "0.2.92", optional = true }
@@ -17,11 +27,11 @@ console_error_panic_hook = "0.1.7"
 [dev-dependencies]
 strum = "0.26.2"
 strum_macros = "0.26.2"
+tokio = { version = "1.0", features = ["full"] }
 
 [features]
 export-abi = ["stylus-sdk/export-abi"]
 debug = ["stylus-sdk/debug"]
-# default = ["web", "stylus"]
 default = ["stylus"]
 stylus = ["stylus-sdk"]
 web = ["wasm-bindgen"]
@@ -42,4 +52,3 @@ opt-level = "s"
 # TODO: remove debug
 debug=true
 
-# TODO: can cargo build run wasmpack

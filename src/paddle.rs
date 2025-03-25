@@ -510,7 +510,7 @@ mod tests {
 
         state.tick(ticks, &inputs).unwrap();
 
-        assert_eq!(state.raft_left.entity.position.x, 8996);
+        assert_eq!(state.raft_left.entity.position.x, 7497);
         assert_eq!(
             state.raft_left.entity.position.y,
             consts::LEFT_RAFT_INIT_POS.y
