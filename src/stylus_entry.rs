@@ -1,7 +1,7 @@
 extern crate alloc;
 
 /// Import items from the SDK. The prelude contains common traits and macros.
-use stylus_sdk::{alloy_primitives::U256, prelude::*};
+use stylus_sdk::{alloy_primitives::U256, alloy_sol_types::sol, evm, prelude::*};
 
 use crate::world::GameState;
 
@@ -12,6 +12,10 @@ sol_storage! {
     pub struct PaddleBattle {
         uint256 number;
     }
+}
+
+sol! {
+    event GameStateEvent(uint256 left_raft_health, uint256 right_raft_health, uint256 left_projectile_count, uint256 right_projectile_count);
 }
 
 /// Declare that `PaddleBattle` is a contract with the following external methods.
@@ -41,11 +45,18 @@ impl PaddleBattle {
         clippy::needless_pass_by_value,
         clippy::uninlined_format_args
     )]
-    pub fn tick(&mut self, num_ticks: u32, inputs: Vec<u32>) -> String {
+    pub fn tick(&mut self, num_ticks: u32, inputs: Vec<u32>) {
         let mut state = GameState::new();
-        match state.tick(num_ticks, &inputs) {
-            Ok(()) => serde_json::to_string(&state).unwrap_or_else(|_| "{}".to_string()),
-            Err(e) => panic!("err {}", e),
-        }
+        
+        state.tick(num_ticks, &inputs).unwrap_or_else(|e| panic!("SimulationError: {:?}", e));
+
+        self.increment();
+
+        evm::log(GameStateEvent{
+            left_raft_health: U256::from(state.raft_left.curr_health),
+            right_raft_health: U256::from(state.raft_right.curr_health),
+            left_projectile_count: U256::from(state.left_projectiles.len()),
+            right_projectile_count: U256::from(state.right_projectiles.len()),
+        });
     }
 }

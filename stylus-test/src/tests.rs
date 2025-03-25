@@ -1,21 +1,22 @@
-use std::path::PathBuf;
-use alloy::primitives::{Address, U256};
-use alloy::providers::Provider;
-use alloy::{
-    network::EthereumWallet, providers::ProviderBuilder,
-    signers::local::PrivateKeySigner,
-};
-use crate::common::setup;
-use crate::{GameInput, TICKS_PER_INPUT, TICK_INPUT_API_CHUNK_SIZE};
-use crate::abi::PaddleBattle;
 
 #[tokio::test]
 async fn integration_test() {
+    use std::path::PathBuf;
+    use alloy::primitives::U256;
+    use alloy::primitives::Log;
+    use alloy::{rpc::types::TransactionReceipt, sol_types::SolEvent};    
+    use alloy::{
+        network::EthereumWallet, providers::ProviderBuilder,
+        signers::local::PrivateKeySigner,
+    };
+    use crate::common::setup;
+    use crate::{GameInput, TICKS_PER_INPUT, TICK_INPUT_API_CHUNK_SIZE};
+    use crate::abi::PaddleBattle;
     let private_key = "0xb6b15c8cb491557369f3c7d2c287b053eb229daa9c22138887752191c9520659";
     let endpoint = "http://localhost:8547";
 
     let signer: PrivateKeySigner = private_key.parse().expect("should parse private key");
-    let addr = signer.address();
+    // let addr = signer.address();
     let wallet = EthereumWallet::from(signer);
 
     let provider = ProviderBuilder::new()
@@ -73,20 +74,32 @@ async fn integration_test() {
         final_inputs.extend(&input_codes);
     }
 
-    let tx_hash = contract
+    let pending_tx = contract
         .tick(num_ticks, final_inputs.clone())
         .send()
         .await
-        .expect("failed to send tx")
-        .watch()
-        .await
-        .expect("failed to submit tx");
+        .expect("failed to send tx");
+
+    let receipt = pending_tx.get_receipt().await.expect("failed to get receipt");
+
 
     println!("submitted tx with inputs: {:?}", final_inputs.clone());
-    
-    // Fetch and print transaction receipt
-    let receipt = provider.get_transaction_receipt(tx_hash).await.expect("failed to get receipt").expect("receipt is none");
     println!("Transaction gas used: {:?}", receipt.gas_used);
 
-    assert_eq!(receipt.gas_used, 783_596);
+    pub fn decoded_log<E: SolEvent>(receipt: &TransactionReceipt) -> Option<Log<E>> {
+        receipt.inner.logs().iter().find_map(|log| E::decode_log(&log.inner, false).ok())
+    }
+
+    let log = decoded_log::<PaddleBattle::GameStateEvent>(&receipt).expect("failed to decode log");
+    println!(
+        "left raft health: {:?}\nright raft health: {:?}\nleft projectile count: {:?}\nright projectile count: {:?}",
+        log.leftRaftHealth, log.rightRaftHealth, log.leftProjectileCount, log.rightProjectileCount
+    );
+
+    assert_eq!(log.leftRaftHealth, U256::from(10_000));
+    assert_eq!(log.rightRaftHealth, U256::from(9_500));
+    assert_eq!(log.leftProjectileCount, U256::from(45));
+    assert_eq!(log.rightProjectileCount, U256::from(0));
+
+    assert_eq!(receipt.gas_used, 756_148);
 } 
