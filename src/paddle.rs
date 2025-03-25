@@ -9,6 +9,8 @@ use crate::world::RaftFighter;
 use crate::world::{Entity, GameState, Position, Projectile, Raft, Velocity};
 use crate::world::Style;
 
+use alloy_primitives::I256;
+use alloy_primitives::U256;
 #[cfg(test)]
 use strum_macros::{EnumCount, EnumIter};
 
@@ -35,43 +37,43 @@ impl GameInput {
     /// # Errors
     ///
     /// Will return `Err` if `input` does not exist as a valid game input
-    pub const fn from(input: u32) -> Result<Self> {
+    pub fn from(input: U256) -> Result<Self> {
         match input {
-            0 => Ok(Self::DeprecatedShootLeftRaft),
-            1 => Ok(Self::MoveLeftRaftRight),
-            2 => Ok(Self::MoveLeftRaftLeft),
-            3 => Ok(Self::DeprecatedShootRightRaft),
-            4 => Ok(Self::MoveRightRaftRight),
-            5 => Ok(Self::MoveRightRaftLeft),
-            6 => Ok(Self::DeprecatedAddProjectile),
-            7 => Ok(Self::MoveLeftFastRaftLeft),
-            8 => Ok(Self::MoveLeftFastRaftRight),
-            9 => Ok(Self::MoveUpRaftRight),
-            10 => Ok(Self::MoveRightRaftDown),
-            11 => Ok(Self::MoveUpRaftLeft),
-            12 => Ok(Self::MoveLeftRaftDown),
-            86 => Ok(Self::NoOp),
+            x if x == U256::from(0) => Ok(Self::DeprecatedShootLeftRaft),
+            x if x == U256::from(1) => Ok(Self::MoveLeftRaftRight),
+            x if x == U256::from(2) => Ok(Self::MoveLeftRaftLeft),
+            x if x == U256::from(3) => Ok(Self::DeprecatedShootRightRaft),
+            x if x == U256::from(4) => Ok(Self::MoveRightRaftRight),
+            x if x == U256::from(5) => Ok(Self::MoveRightRaftLeft),
+            x if x == U256::from(6) => Ok(Self::DeprecatedAddProjectile),
+            x if x == U256::from(7) => Ok(Self::MoveLeftFastRaftLeft),
+            x if x == U256::from(8) => Ok(Self::MoveLeftFastRaftRight),
+            x if x == U256::from(9) => Ok(Self::MoveUpRaftRight),
+            x if x == U256::from(10) => Ok(Self::MoveRightRaftDown),
+            x if x == U256::from(11) => Ok(Self::MoveUpRaftLeft),
+            x if x == U256::from(12) => Ok(Self::MoveLeftRaftDown),
+            x if x == U256::from(86) => Ok(Self::NoOp),
             received => Err(SimulationError::InvalidInput { received }),
         }
     }
 
     #[must_use]
-    pub const fn to_u32(&self) -> u32 {
+    pub fn to_U256(&self) -> U256 {
         match self {
-            Self::DeprecatedShootLeftRaft => 0,
-            Self::MoveLeftRaftRight => 1,
-            Self::MoveLeftRaftLeft => 2,
-            Self::DeprecatedShootRightRaft => 3,
-            Self::MoveRightRaftRight => 4,
-            Self::MoveRightRaftLeft => 5,
-            Self::DeprecatedAddProjectile => 6,
-            Self::MoveLeftFastRaftLeft => 7,
-            Self::MoveLeftFastRaftRight => 8,
-            Self::MoveUpRaftRight => 9,
-            Self::MoveRightRaftDown => 10,
-            Self::MoveUpRaftLeft => 11,
-            Self::MoveLeftRaftDown => 12,
-            Self::NoOp => 86,
+            Self::DeprecatedShootLeftRaft => U256::from(0),
+            Self::MoveLeftRaftRight => U256::from(1),
+            Self::MoveLeftRaftLeft => U256::from(2),
+            Self::DeprecatedShootRightRaft => U256::from(3),
+            Self::MoveRightRaftRight => U256::from(4),
+            Self::MoveRightRaftLeft => U256::from(5),
+            Self::DeprecatedAddProjectile => U256::from(6),
+            Self::MoveLeftFastRaftLeft => U256::from(7),
+            Self::MoveLeftFastRaftRight => U256::from(8),
+            Self::MoveUpRaftRight => U256::from(9),
+            Self::MoveRightRaftDown => U256::from(10),
+            Self::MoveUpRaftLeft => U256::from(11),
+            Self::MoveLeftRaftDown => U256::from(12),
+            Self::NoOp => U256::from(86),
         }
     }
 }
@@ -82,8 +84,8 @@ impl GameState {
 
         let mut raft_left = Raft::new(
             Entity {
-                position: consts::LEFT_RAFT_INIT_POS,
-                velocity: consts::NO_VELOCITY,
+                position: consts::left_raft_init_pos(),
+                velocity: consts::no_velocity(),
                 is_active: true,
             },
             Style { color: "#FF0000".to_string() },
@@ -91,15 +93,18 @@ impl GameState {
 
         let fighter_entity = Entity {
             position: Position {
-                x: raft_left.entity.position.x + raft_left.width * 4 / 5,
-                y: raft_left.entity.position.y + raft_left.height * 4 / 5,
+                x: raft_left.entity.position.x + raft_left.width * U256::from(4) / U256::from(5),
+                y: raft_left.entity.position.y + raft_left.height * U256::from(4) / U256::from(5),
             },
-            velocity: consts::NO_VELOCITY,
+            velocity: consts::no_velocity(),
             is_active: true,
         };
 
         let bazooka_fighter = RaftFighter::new(
-            fighter_entity, GunTypes::SMG, consts::DEFAULT_RAFT_FIGHTER_WIDTH, consts::DEFAULT_RAFT_FIGHTER_HEIGHT
+            fighter_entity, 
+            GunTypes::SMG,
+            U256::from(consts::DEFAULT_RAFT_FIGHTER_WIDTH),
+            U256::from(consts::DEFAULT_RAFT_FIGHTER_HEIGHT)
         );
 
         raft_left.position_fighters(vec![bazooka_fighter]);
@@ -109,17 +114,17 @@ impl GameState {
             raft_right: Raft::new(
                 Entity {
                     position: Position {
-                        x: consts::WORLD_MAX_X - consts::DEFAULT_RAFT_WIDTH,
-                        y: consts::RIGHT_RAFT_INIT_POS.y,
+                        x: U256::from(consts::WORLD_MAX_X) - U256::from(consts::DEFAULT_RAFT_WIDTH),
+                        y: U256::from(consts::right_raft_init_pos().y),
                     },
-                    velocity: consts::NO_VELOCITY,
+                    velocity: consts::no_velocity(),
                     is_active: true,
                 },
                 Style { color: "#0000FF".to_string() },
             ),
             left_projectiles: vec![],
             right_projectiles: vec![],
-            ticks: 0,
+            ticks: U256::from(0),
         }
     }
 
@@ -127,20 +132,18 @@ impl GameState {
     ///
     /// Will return Err if input is invalid
     #[allow(clippy::too_many_lines)]
-    pub fn tick(&mut self, ticks_to_process: u32, input: &Vec<u32>) -> Result<()> {
+    pub fn tick(&mut self, ticks_to_process: U256, input: &Vec<U256>) -> Result<()> {
         let initial_tick = self.ticks;
         let end_tick = initial_tick + ticks_to_process;
         let inputs_needed = tick_inputs_needed(ticks_to_process);
-        let Some(input_len) = u32::try_from(input.len()).ok() else {
-            return Err(SimulationError::USizeToU32Conversion {});
-        };
+        let input_len = U256::from(input.len());
 
         if input_len != inputs_needed {
             return Err(SimulationError::InvalidInputLength {
-                received: input_len,
-                expected: inputs_needed,
-                initial_tick,
-                end_tick,
+                received: U256::from(input_len),
+                expected: U256::from(inputs_needed),
+                initial_tick: U256::from(initial_tick),
+                end_tick: U256::from(end_tick),
             });
         }
 
@@ -148,11 +151,11 @@ impl GameState {
         // let input_index = (tick / consts::TICKS_PER_INPUT) as usize - current_input_index;
         let chunked_input = input
             .chunks(consts::TICK_INPUT_API_CHUNK_SIZE as usize)
-            .map(<[u32]>::to_vec)
-            .collect::<Vec<Vec<u32>>>();
+            .map(<[U256]>::to_vec)
+            .collect::<Vec<Vec<U256>>>();
         let mut iter = chunked_input.iter();
 
-        for curr_tick in initial_tick..end_tick {
+        for curr_tick in initial_tick.to::<u32>() .. end_tick.to::<u32>() {
             let raft_left = &mut self.raft_left;
             let raft_right = &mut self.raft_right;
 
@@ -186,19 +189,19 @@ impl GameState {
              */
 
             if curr_tick % consts::TICKS_PER_INPUT == 0 {
-                handle_input(iter.next(), raft_left, raft_right, curr_tick)?;
+                handle_input(iter.next(), raft_left, raft_right, U256::from(curr_tick))?;
             }
 
-            update_raft(raft_left, curr_tick);
-            update_raft(raft_right, curr_tick);
+            update_raft(raft_left, U256::from(curr_tick));
+            update_raft(raft_right, U256::from(curr_tick));
 
             update_fighters(raft_left, &mut self.left_projectiles, Bearings::Northeast, curr_tick);
             update_fighters(raft_right, &mut self.right_projectiles, Bearings::Northwest, curr_tick);
 
-            update_projectiles(&mut self.left_projectiles, raft_right, curr_tick);
-            update_projectiles(&mut self.right_projectiles, raft_left, curr_tick);
+            update_projectiles(&mut self.left_projectiles, raft_right, U256::from(curr_tick));
+            update_projectiles(&mut self.right_projectiles, raft_left, U256::from(curr_tick));
 
-            self.ticks += 1;
+            self.ticks += U256::from(1);
         }
         Ok(())
     }
@@ -206,10 +209,10 @@ impl GameState {
 
 
 fn handle_input(
-    input_for_tick: Option<&Vec<u32>>,
+    input_for_tick: Option<&Vec<U256>>,
     raft_left: &mut Raft,
     raft_right: &mut Raft,
-    curr_tick: u32,
+    curr_tick: U256,
 ) -> Result<()> {
     let input_for_tick = input_for_tick.ok_or(SimulationError::NoInput {
         num_tick: curr_tick,
@@ -221,42 +224,53 @@ fn handle_input(
             GameInput::DeprecatedShootLeftRaft => {}
             GameInput::DeprecatedShootRightRaft => {}
             GameInput::MoveLeftRaftRight => {
-                raft_left.entity.velocity.vx = consts::VELOCITY_GAIN_NORMAL;
+                raft_left.entity.velocity.vx = I256::from_dec_str(consts::VELOCITY_GAIN_NORMAL).unwrap();
             }
             GameInput::MoveLeftRaftLeft => {
-                raft_left.entity.velocity.vx = -consts::VELOCITY_GAIN_NORMAL;
+                raft_left.entity.velocity.vx =
+                    I256::from_dec_str(consts::VELOCITY_GAIN_NORMAL).unwrap() *
+                    I256::from_dec_str("-1").unwrap();
             }
+
             GameInput::MoveRightRaftRight => {
-                raft_right.entity.velocity.vx = consts::VELOCITY_GAIN_NORMAL;
+                raft_right.entity.velocity.vx = I256::from_dec_str(consts::VELOCITY_GAIN_NORMAL).unwrap();
             }
             GameInput::MoveUpRaftRight => {
-                raft_right.entity.velocity.vy = consts::VELOCITY_GAIN_NORMAL;
+                raft_right.entity.velocity.vy = I256::from_dec_str(consts::VELOCITY_GAIN_NORMAL).unwrap();
             }
             GameInput::MoveRightRaftLeft => {
-                raft_right.entity.velocity.vx = -consts::VELOCITY_GAIN_NORMAL;
+                raft_right.entity.velocity.vx =
+                I256::from_dec_str(consts::VELOCITY_GAIN_NORMAL).unwrap() *
+                I256::from_dec_str("-1").unwrap();
             }
             GameInput::MoveLeftFastRaftLeft => {
-                raft_left.entity.velocity.vx = consts::VELOCITY_GAIN_BOOST;
+                raft_left.entity.velocity.vx = I256::from_dec_str(consts::VELOCITY_GAIN_BOOST).unwrap();
             }
             GameInput::MoveLeftFastRaftRight => {
-                raft_right.entity.velocity.vx = -consts::VELOCITY_GAIN_BOOST;
+                raft_right.entity.velocity.vx = 
+                I256::from_dec_str(consts::VELOCITY_GAIN_BOOST).unwrap() *
+                I256::from_dec_str("-1").unwrap();
             }
             GameInput::DeprecatedAddProjectile => {}
             GameInput::MoveRightRaftDown => {
-                raft_right.entity.velocity.vy = -consts::VELOCITY_GAIN_NORMAL;
+                raft_right.entity.velocity.vy =
+                I256::from_dec_str(consts::VELOCITY_GAIN_NORMAL).unwrap() *
+                I256::from_dec_str("-1").unwrap();
             }
             GameInput::MoveUpRaftLeft => {
-                raft_left.entity.velocity.vy = consts::VELOCITY_GAIN_NORMAL;
+                raft_left.entity.velocity.vy =
+                I256::from_dec_str(consts::VELOCITY_GAIN_NORMAL).unwrap();
             }
             GameInput::MoveLeftRaftDown => {
-                raft_left.entity.velocity.vy = -consts::VELOCITY_GAIN_NORMAL;
+                raft_left.entity.velocity.vy = I256::from_dec_str(consts::VELOCITY_GAIN_NORMAL).unwrap() *
+                I256::from_dec_str("-1").unwrap();;
             }
         };
     }
     Ok(())
 }
 
-fn update_raft(raft: &mut Raft, curr_tick: u32) {
+fn update_raft(raft: &mut Raft, curr_tick: U256) {
     let prev_entity = raft.entity.clone();
     raft.update_position(curr_tick);
 
@@ -279,7 +293,7 @@ fn update_fighters(raft: &mut Raft, projectiles: &mut Vec<Projectile>, direction
     }
 }
 
-fn update_projectiles(projectiles: &mut Vec<Projectile>, opposing_raft: &mut Raft, curr_tick: u32) {
+fn update_projectiles(projectiles: &mut Vec<Projectile>, opposing_raft: &mut Raft, curr_tick: U256) {
     for item in projectiles.iter_mut() {
         item.update_position(curr_tick);
 
@@ -322,19 +336,23 @@ pub enum ProjectileDirection {
     StraightDown,
 }
 
-const fn tick_inputs_needed(ticks_to_process: u32) -> u32 {
-    (ticks_to_process / consts::TICKS_PER_INPUT
-        + if ticks_to_process % consts::TICKS_PER_INPUT > 0 {
-            1
+fn tick_inputs_needed(ticks_to_process: U256) -> U256 {
+    (ticks_to_process / U256::from(consts::TICKS_PER_INPUT)
+        + if ticks_to_process % U256::from(consts::TICKS_PER_INPUT) > U256::ZERO {
+            U256::from(1)
         } else {
-            0
+            U256::ZERO
         })
-        * consts::TICK_INPUT_API_CHUNK_SIZE
+        * U256::from(consts::TICK_INPUT_API_CHUNK_SIZE)
 }
 
 fn is_within_world_bounds<T: Collision>(obj: &T) -> bool {
     let (x, y, width, height) = obj.bounding_box();
-    x > 0 && y > 0 && x.saturating_add(width) <= consts::WORLD_MAX_X && y.saturating_add(height) <= consts::WORLD_MAX_Y
+
+    x > U256::ZERO &&
+    y > U256::ZERO &&
+    x.saturating_add(width) <= U256::from(consts::WORLD_MAX_X) &&
+    y.saturating_add(height) <= U256::from(consts::WORLD_MAX_Y)
 }
 
 
@@ -344,6 +362,9 @@ impl Raft {
             let (fx, fy, fw, fh) = fighter.bounding_box();
             let (rx, ry, rw, rh) = self.bounding_box();
 
+            self.raft_fighters.push(fighter.clone());
+
+            /* 
             // Calculate the overlapping area
             let overlap_x = (fx.max(rx) as i32 - (fx + fw).min(rx + rw) as i32).abs() as u32;
             let overlap_y = (fy.max(ry) as i32 - (fy + fh).min(ry + rh) as i32).abs() as u32;
@@ -358,17 +379,18 @@ impl Raft {
             if overlap_area * 100 >= fighter_area * 5 { // Assuming 5% overlap is required
                 self.raft_fighters.push(fighter.clone());
             }
+            */
         }
     }
 
     pub fn take_damage(&mut self, projectile: &Projectile) {
-        if self.curr_health > 0 {
+        if self.curr_health > U256::ZERO {
             let perc = self.max_health / self.curr_health;
             let dmg = projectile.radius * perc;
             
             self.curr_health = self.curr_health.saturating_sub(dmg);
             
-            if self.curr_health == 0 {
+            if self.curr_health == U256::ZERO {
                 self.entity.is_active = false;
             }
         }
@@ -377,13 +399,13 @@ impl Raft {
 
 impl RaftFighter {
     pub fn take_damage(&mut self, projectile: &Projectile) {
-        if self.curr_health > 0 {
+        if self.curr_health > U256::ZERO {
             let perc = self.max_health / self.curr_health;
             let dmg = projectile.radius * perc;
             
             self.curr_health = self.curr_health.saturating_sub(dmg);
             
-            if self.curr_health == 0 {
+            if self.curr_health == U256::ZERO {
                 self.entity.is_active = false;
             }
         }
@@ -401,16 +423,16 @@ impl RaftFighter {
 
         let init_pos = match side {
             Bearings::East => Position {
-                x: self.entity.position.x + self.width + consts::DEFAULT_PROJECTILE_RADIUS * 2,
-                y: self.entity.position.y + self.height + consts::DEFAULT_PROJECTILE_RADIUS * 2,
+                x: self.entity.position.x + self.width + U256::from(consts::DEFAULT_PROJECTILE_RADIUS * 2),
+                y: self.entity.position.y + self.height + U256::from(consts::DEFAULT_PROJECTILE_RADIUS * 2),
             },
             Bearings::West => Position {
                 x: self
                     .entity
                     .position
                     .x
-                    .saturating_sub(consts::DEFAULT_PROJECTILE_RADIUS),
-                y: self.entity.position.y + self.height + consts::DEFAULT_PROJECTILE_RADIUS * 2,
+                    .saturating_sub(U256::from(consts::DEFAULT_PROJECTILE_RADIUS)),
+                y: self.entity.position.y + self.height + U256::from(consts::DEFAULT_PROJECTILE_RADIUS * 2),
             },
             _ => Position {
                 x: self.entity.position.x,
@@ -418,19 +440,22 @@ impl RaftFighter {
             },
         };
 
+        let positive_base_velocity = I256::from_dec_str(&base_velocity.to_string()).unwrap();
+        let negative_base_velocity = I256::from_dec_str(&(-base_velocity).to_string()).unwrap();
+        
         let velocity = match side {
-            Bearings::North => Velocity { vx: 0, vy: -base_velocity },
-            Bearings::South => Velocity { vx: 0, vy: base_velocity },
-            Bearings::East => Velocity { vx: base_velocity, vy: 0 },
-            Bearings::West => Velocity { vx: -base_velocity, vy: 0 },
-            Bearings::Northeast => Velocity { vx: base_velocity, vy: -base_velocity },
-            Bearings::Northwest => Velocity { vx: -base_velocity, vy: -base_velocity },
-            Bearings::Southeast => Velocity { vx: base_velocity, vy: base_velocity },
-            Bearings::Southwest => Velocity { vx: -base_velocity, vy: base_velocity },
+            Bearings::North => Velocity { vx: I256::ZERO, vy: negative_base_velocity },
+            Bearings::South => Velocity { vx: I256::ZERO, vy: positive_base_velocity },
+            Bearings::East => Velocity { vx: positive_base_velocity, vy: I256::ZERO },
+            Bearings::West => Velocity { vx: negative_base_velocity, vy: I256::ZERO },
+            Bearings::Northeast => Velocity { vx: positive_base_velocity, vy: negative_base_velocity },
+            Bearings::Northwest => Velocity { vx: negative_base_velocity, vy: negative_base_velocity },
+            Bearings::Southeast => Velocity { vx: positive_base_velocity, vy: positive_base_velocity },
+            Bearings::Southwest => Velocity { vx: negative_base_velocity, vy: positive_base_velocity },
         };
 
         Projectile {
-            radius,
+            radius: U256::from(radius),
             entity: Entity {
                 position: init_pos,
                 velocity: velocity,
@@ -449,7 +474,7 @@ mod tests {
     #[test]
     fn it_exhaustively_handles_all_game_iputs_from_() {
         for variant in GameInput::iter() {
-            let as_u32 = variant.to_u32();
+            let as_u32 = variant.to_U256();
             let from_u32 = GameInput::from(as_u32);
             assert!(from_u32.is_ok());
             assert_eq!(from_u32.unwrap(), variant);
@@ -459,9 +484,9 @@ mod tests {
     #[test]
     fn it_creates_stable_game_state() {
         let mut state = GameState::new();
-        let ticks = 1000;
+        let ticks = U256::from(1000);
         let inputs_needed = tick_inputs_needed(ticks);
-        let inputs = vec![GameInput::NoOp.to_u32(); inputs_needed as usize];
+        let inputs = vec![GameInput::NoOp.to_U256(); inputs_needed.to::<u32>() as usize];
         let initial_state = state.clone();
 
         state.tick(ticks, &inputs).unwrap();
@@ -488,49 +513,49 @@ mod tests {
     #[allow(clippy::match_same_arms)]
     fn it_simulates_game_state() {
         let mut state = GameState::new();
-        let ticks = 10000;
+        let ticks = U256::from(10000);
         let inputs_needed = tick_inputs_needed(ticks);
-        let mut inputs = Vec::with_capacity(inputs_needed as usize);
+        let mut inputs = Vec::with_capacity(inputs_needed.to::<u32>() as usize);
 
-        for i in 0..inputs_needed {
+        for i in 0..inputs_needed.to::<u32>() {
             inputs.push(match i % 33 {
-                0 => GameInput::DeprecatedShootLeftRaft.to_u32(),
-                1 => GameInput::MoveLeftRaftRight.to_u32(),
-                2 => GameInput::MoveLeftRaftLeft.to_u32(),
-                3 => GameInput::DeprecatedShootRightRaft.to_u32(),
-                4 => GameInput::MoveRightRaftRight.to_u32(),
-                5 => GameInput::MoveRightRaftLeft.to_u32(),
-                6 => GameInput::DeprecatedAddProjectile.to_u32(),
+                0 => GameInput::DeprecatedShootLeftRaft.to_U256(),
+                1 => GameInput::MoveLeftRaftRight.to_U256(),
+                2 => GameInput::MoveLeftRaftLeft.to_U256(),
+                3 => GameInput::DeprecatedShootRightRaft.to_U256(),
+                4 => GameInput::MoveRightRaftRight.to_U256(),
+                5 => GameInput::MoveRightRaftLeft.to_U256(),
+                6 => GameInput::DeprecatedAddProjectile.to_U256(),
                 // repeat values so they occur more often
-                7 => GameInput::DeprecatedAddProjectile.to_u32(),
-                8 => GameInput::MoveLeftRaftRight.to_u32(),
-                _ => GameInput::NoOp.to_u32(),
+                7 => GameInput::DeprecatedAddProjectile.to_U256(),
+                8 => GameInput::MoveLeftRaftRight.to_U256(),
+                _ => GameInput::NoOp.to_U256(),
             });
         }
 
         state.tick(ticks, &inputs).unwrap();
 
-        assert_eq!(state.raft_left.entity.position.x, 7497);
+        assert_eq!(state.raft_left.entity.position.x, U256::from(7497));
         assert_eq!(
             state.raft_left.entity.position.y,
-            consts::LEFT_RAFT_INIT_POS.y
+            consts::left_raft_init_pos().y
         );
-        assert_eq!(state.raft_right.entity.position.x, 5);
+        assert_eq!(state.raft_right.entity.position.x, U256::from(5));
         assert_eq!(
             state.raft_right.entity.position.y,
-            consts::RIGHT_RAFT_INIT_POS.y
+            consts::right_raft_init_pos().y
         );
     }
 
     #[test]
     fn it_enforces_world_bounds() {
         let mut state = GameState::new();
-        let ticks = 10000;
+        let ticks = U256::from(10000);
         let inputs_needed = tick_inputs_needed(ticks);
-        let inputs = vec![GameInput::MoveLeftRaftRight.to_u32(); inputs_needed as usize];
+        let inputs = vec![GameInput::MoveLeftRaftRight.to_U256(); inputs_needed.to::<u32>() as usize];
         // TODO: test projectiles respect world bounds and are correctly removed. also add in raft_right
         state.tick(ticks, &inputs).unwrap();
 
-        assert!(state.raft_left.entity.position.x + state.raft_left.width < consts::WORLD_MAX_X);
+        assert!(state.raft_left.entity.position.x + state.raft_left.width < U256::from(consts::WORLD_MAX_X));
     }
 }
