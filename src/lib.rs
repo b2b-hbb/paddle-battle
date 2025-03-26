@@ -1,5 +1,6 @@
-#![no_std]
 #![warn(clippy::pedantic, clippy::nursery, clippy::all)]
+
+#![cfg_attr(not(feature = "export-abi"), no_std)]
 
 #[cfg(feature = "stylus")]
 pub mod stylus_entry;

@@ -3,6 +3,9 @@ extern crate alloc;
 use alloc::vec::Vec;
 use alloc::string::String;
 use alloc::vec;
+use alloy_primitives::B256;
+use alloy_primitives::Bytes;
+use alloy_primitives::keccak256;
 use minicbor::{Encode, Decode};
 
 use crate::consts;
@@ -225,7 +228,20 @@ impl GameState {
         minicbor::to_vec(self).expect("CBOR encoding failed")
     }
 
-    pub fn from_serialized_state(encoded: Vec<u8>) -> Self {
-        minicbor::decode(encoded.as_slice()).expect("CBOR decoding failed")
+    pub fn from_serialized_state(encoded: &Vec<u8>) -> Self {
+        minicbor::decode(encoded).expect("CBOR decoding failed")
+    }
+    // pub fn to_serialized_state(&self) -> Bytes {
+    //     Bytes::from(minicbor::to_vec(self).expect("CBOR encoding failed"))
+    // }
+
+    // pub fn from_serialized_state(encoded: &Bytes) -> Self {
+    //     minicbor::decode(encoded).expect("CBOR decoding failed")
+    // }
+
+    pub fn hash(&self) -> B256 {
+        let serialized_game_state = self.to_serialized_state();
+        let hash = keccak256(&serialized_game_state);
+        hash
     }
 }

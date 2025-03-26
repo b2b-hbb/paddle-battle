@@ -3,5 +3,5 @@
 
 #[cfg(feature = "export-abi")]
 fn main() {
-    paddle_battle::stylus_entry::main();
+    paddle_battle::stylus_entry::print_abi("MIT-OR-APACHE-2.0", "pragma solidity ^0.8.23;");
 }
