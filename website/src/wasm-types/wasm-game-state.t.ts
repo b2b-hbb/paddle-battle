@@ -235,13 +235,3 @@ export const parseGameState = (data: Uint8Array): GameState => {
         throw error;
     }
 }
-
-// Add type declarations for the WebAssembly functions
-declare global {
-    interface Window {
-        wasm: {
-            update_game_state: (input: Uint8Array, state: Uint8Array) => Uint8Array;
-            get_initial_state: () => Uint8Array;
-        }
-    }
-}
