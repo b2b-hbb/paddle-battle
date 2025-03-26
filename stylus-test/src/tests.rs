@@ -1,6 +1,7 @@
 
 #[tokio::test]
 async fn integration_test() {
+    use alloy::{hex::FromHex, primitives::B256};
     use std::path::PathBuf;
     use alloy::primitives::U256;
     use alloy::primitives::Log;
@@ -74,6 +75,10 @@ async fn integration_test() {
         final_inputs.extend(&input_codes);
     }
 
+    let prev_game_state_hash = contract.gameStateHash().call().await.unwrap();
+
+    assert_eq!(prev_game_state_hash._0, B256::from_hex("0x0000000000000000000000000000000000000000000000000000000000000000").unwrap());
+
     let pending_tx = contract
         .tick(num_ticks, final_inputs.clone())
         .send()
@@ -92,8 +97,8 @@ async fn integration_test() {
 
     let log = decoded_log::<PaddleBattle::GameStateEvent>(&receipt).expect("failed to decode log");
     println!(
-        "left raft health: {:?}\nright raft health: {:?}\nleft projectile count: {:?}\nright projectile count: {:?}",
-        log.leftRaftHealth, log.rightRaftHealth, log.leftProjectileCount, log.rightProjectileCount
+        "left raft health: {:?}\nright raft health: {:?}\nleft projectile count: {:?}\nright projectile count: {:?}\ngame state hash: {:?}",
+        log.leftRaftHealth, log.rightRaftHealth, log.leftProjectileCount, log.rightProjectileCount, log.gameStateHash
     );
 
     assert_eq!(log.leftRaftHealth, U256::from(10_000));
@@ -101,5 +106,12 @@ async fn integration_test() {
     assert_eq!(log.leftProjectileCount, U256::from(45));
     assert_eq!(log.rightProjectileCount, U256::from(0));
 
-    assert_eq!(receipt.gas_used, 756_148);
-} 
+    assert_eq!(receipt.gas_used, 822_452);
+
+    let post_game_state_hash = contract.gameStateHash().call().await.unwrap();
+
+    assert_eq!(post_game_state_hash._0, log.gameStateHash);
+    assert_eq!(post_game_state_hash._0, B256::from_hex("0x1b475cd15f092aabec550bbe92900bf87e2c03e75067cbf8c12ab6e7273040d8").unwrap());
+
+    // TODO: now execute a test from the UI over here by loading the inputs and then calling the tick function
+}
