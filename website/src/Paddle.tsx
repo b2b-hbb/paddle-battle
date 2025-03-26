@@ -202,7 +202,9 @@ const PaddleGame: React.FC = () => {
       }
 
       const array = new Uint32Array(final.flat());
-      const state = parseGameState(wasmRef.current.tick_and_return_state(TICKS_PER_LOOP, array))
+      
+      const stateBytes = wasmRef.current.tick_and_return_state(TICKS_PER_LOOP, array);
+      const state = parseGameState(new Uint8Array(stateBytes));
       setGameState(state);
       drawGame(ctx, state);
       tickCounterRef.current = end_tick;

@@ -1,72 +1,116 @@
-use serde::{Deserialize, Serialize};
+#![no_std]
+extern crate alloc;
+
+use alloc::vec::Vec;
+use minicbor::{Encode, Decode};
 
 use crate::consts;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Encode, Decode)]
+#[cbor(map)]
 pub enum Bearings {
+    #[n(0)]
     North,
+    #[n(1)]
     South,
+    #[n(2)]
     East,
+    #[n(3)]
     West,
+    #[n(4)]
     Northeast,
+    #[n(5)]
     Northwest,
+    #[n(6)]
     Southeast,
+    #[n(7)]
     Southwest,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone, Encode, Decode)]
+#[cbor(map)]
 pub struct Position {
+    #[n(0)]
     pub x: u32,
+    #[n(1)]
     pub y: u32,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone, Encode, Decode)]
+#[cbor(map)]
 pub struct Velocity {
+    #[n(0)]
     pub vx: i32,
+    #[n(1)]
     pub vy: i32,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone, Encode, Decode)]
+#[cbor(map)]
 pub struct Entity {
+    #[n(0)]
     pub position: Position,
+    #[n(1)]
     pub velocity: Velocity,
+    #[n(2)]
     pub is_active: bool,
 }
 
-// TODO: add different firing rates for different guns
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone, Encode, Decode)]
+#[cbor(map)]
 pub enum GunTypes {
+    #[n(0)]
     Bazooka,
+    #[n(1)]
     SMG,
+    #[n(2)]
     FlameThrower,
+    #[n(3)]
     StraightShooter,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone, Encode, Decode)]
+#[cbor(map)]
 pub struct Style {
+    #[n(0)]
     pub color: String,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone, Encode, Decode)]
+#[cbor(map)]
 pub struct Raft {
+    #[n(0)]
     pub entity: Entity,
+    #[n(1)]
     pub width: u32,
+    #[n(2)]
     pub height: u32,
+    #[n(3)]
     pub max_health: u32,
+    #[n(4)]
     pub curr_health: u32,
+    #[n(5)]
     pub raft_fighters: Vec<RaftFighter>,
+    #[n(6)]
     pub style: Style,
 }
 
-// Update RaftFighter to include health tracking
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone, Encode, Decode)]
+#[cbor(map)]
 pub struct RaftFighter {
+    #[n(0)]
     pub entity: Entity,
+    #[n(1)]
     pub width: u32,
+    #[n(2)]
     pub height: u32,
+    #[n(3)]
     pub gun: GunTypes,
+    #[n(4)]
     pub curr_health: u32,
+    #[n(5)]
     pub max_health: u32,
+    #[n(6)]
     pub style: Style,
 }
 
@@ -97,10 +141,14 @@ impl RaftFighter {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone, Encode, Decode)]
+#[cbor(map)]
 pub struct Projectile {
+    #[n(0)]
     pub entity: Entity,
+    #[n(1)]
     pub radius: u32,
+    #[n(2)]
     pub style: Style,
 }
 
@@ -145,12 +193,18 @@ impl GunTypes {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Clone, Encode, Decode)]
+#[cbor(map)]
 pub struct GameState {
+    #[n(0)]
     pub raft_left: Raft,
+    #[n(1)]
     pub raft_right: Raft,
+    #[n(2)]
     pub left_projectiles: Vec<Projectile>,
+    #[n(3)]
     pub right_projectiles: Vec<Projectile>,
+    #[n(4)]
     pub ticks: u32,
 }
 
@@ -162,5 +216,15 @@ impl Projectile {
             radius,
             style,
         }
+    }
+}
+
+impl GameState {
+    pub fn to_serialized_state(&self) -> Vec<u8> {
+        minicbor::to_vec(self).expect("CBOR encoding failed")
+    }
+
+    pub fn from_serialized_state(encoded: &[u8]) -> Self {
+        minicbor::decode(encoded).expect("CBOR decoding failed")
     }
 }

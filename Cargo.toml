@@ -23,6 +23,7 @@ serde = { version = "1.0.198", features = ["derive"] }
 wasm-bindgen = { version = "0.2.92", optional = true }
 serde_json = "1.0.116"
 console_error_panic_hook = "0.1.7"
+minicbor = { version = "0.26.0", default-features = false, features = ["alloc", "derive"] }
 
 [dev-dependencies]
 strum = "0.26.2"

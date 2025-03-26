@@ -26,15 +26,6 @@ sol! {
 }
 
 impl GameState {
-    // TODO: assess abi encoding of game state. current approach bloats contract size too much
-    pub fn from_serialized_state(serialized_state: String) -> Self {
-        serde_json::from_str(&serialized_state).expect("failed to deserialize game state")
-    }
-
-    fn to_serialized_state(&self) -> String {
-        serde_json::to_string(&self).expect("Failed to serialize game state")
-    }
-
     pub fn hash(&self) -> B256 {
         let serialized_game_state = self.to_serialized_state();
         let hash = keccak(&serialized_game_state);

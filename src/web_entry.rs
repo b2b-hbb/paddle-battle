@@ -1,6 +1,5 @@
 use console_error_panic_hook::set_once;
 use wasm_bindgen::prelude::*;
-
 use crate::consts;
 use crate::world::GameState;
 
@@ -41,15 +40,14 @@ impl WasmState {
 
     #[wasm_bindgen]
     #[allow(clippy::must_use_candidate)]
-    pub fn to_json(&self) -> String {
-        // https://rustwasm.github.io/wasm-bindgen/reference/arbitrary-data-with-serde.html
-        serde_json::to_string(&self.inner).unwrap_or_else(|_| "{}".to_string())
+    pub fn to_cbor(&self) -> Vec<u8> {
+        self.inner.to_serialized_state()
     }
 
     #[wasm_bindgen]
-    pub fn tick_and_return_state(&mut self, ticks: u32, input: Vec<u32>) -> String {
+    pub fn tick_and_return_state(&mut self, ticks: u32, input: Vec<u32>) -> Vec<u8> {
         self.tick(ticks, input);
-        self.to_json()
+        self.to_cbor()
     }
 
     #[wasm_bindgen]

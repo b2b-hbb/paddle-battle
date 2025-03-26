@@ -98,14 +98,14 @@ async fn integration_test() {
     assert_eq!(log.leftProjectileCount, U256::from(45));
     assert_eq!(log.rightProjectileCount, U256::from(0));
 
-    assert_eq!(receipt.gas_used, 816_324);
+    assert_eq!(receipt.gas_used, 790_754);
 
     let post_game_state_hash = contract.gameStateHash().call().await.unwrap();
 
     assert_eq!(post_game_state_hash._0, log.gameStateHash);
     assert_eq!(
         post_game_state_hash._0,
-        B256::from_hex("0x1b475cd15f092aabec550bbe92900bf87e2c03e75067cbf8c12ab6e7273040d8")
+        B256::from_hex("0xaf5a095d6a5f3d5bb2ae78b550bf07c374cdeb7ffdda9fef1072ab75aea3d263")
             .unwrap()
     );
 
