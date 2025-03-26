@@ -1,7 +1,8 @@
-#![no_std]
 extern crate alloc;
 
 use alloc::vec::Vec;
+use alloc::string::String;
+use alloc::vec;
 use minicbor::{Encode, Decode};
 
 use crate::consts;
@@ -173,7 +174,7 @@ impl Raft {
 impl RaftFighter {
     pub fn style(&self) -> Style {
         Style {
-            color: "#0F002F".to_string(),
+            color: String::from("#0F002F"),
         }
     }
 }
@@ -188,7 +189,7 @@ impl GunTypes {
         };
 
         Style {
-            color: color.to_string(),
+            color: String::from(color),
         }
     }
 }
@@ -224,7 +225,7 @@ impl GameState {
         minicbor::to_vec(self).expect("CBOR encoding failed")
     }
 
-    pub fn from_serialized_state(encoded: &[u8]) -> Self {
-        minicbor::decode(encoded).expect("CBOR decoding failed")
+    pub fn from_serialized_state(encoded: Vec<u8>) -> Self {
+        minicbor::decode(encoded.as_slice()).expect("CBOR decoding failed")
     }
 }

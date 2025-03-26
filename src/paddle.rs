@@ -1,3 +1,9 @@
+extern crate alloc;
+
+use alloc::vec::Vec;
+use alloc::string::String;
+use alloc::vec;
+
 use crate::consts;
 
 use crate::errors::Result;
@@ -86,43 +92,72 @@ impl GameState {
                 is_active: true,
             },
             Style {
-                color: "#FF0000".to_string(),
+                color: String::from("#FF0000"),
             },
         );
 
-        let fighter_entity = Entity {
-            position: Position {
-                x: raft_left.entity.position.x + raft_left.width * 4 / 5,
-                y: raft_left.entity.position.y + raft_left.height * 4 / 5,
+        let mut raft_right = Raft::new(
+            Entity {
+                position: Position {
+                    x: consts::WORLD_MAX_X - consts::DEFAULT_RAFT_WIDTH,
+                    y: consts::RIGHT_RAFT_INIT_POS.y,
+                },
+                velocity: consts::NO_VELOCITY,
+                is_active: true,
             },
-            velocity: consts::NO_VELOCITY,
-            is_active: true,
-        };
+            Style {
+                color: String::from("#0000FF"),
+            },
+        );
 
-        let bazooka_fighter = RaftFighter::new(
-            fighter_entity,
+        let left_fighter1 = RaftFighter::new(
+            Entity {
+                position: Position {
+                    x: raft_left.entity.position.x + raft_left.width * 4 / 5,
+                    y: raft_left.entity.position.y + raft_left.height * 4 / 5,
+                },
+                velocity: consts::NO_VELOCITY,
+                is_active: true,
+            },
             GunTypes::SMG,
             consts::DEFAULT_RAFT_FIGHTER_WIDTH,
             consts::DEFAULT_RAFT_FIGHTER_HEIGHT,
         );
 
-        raft_left.position_fighters(vec![bazooka_fighter]);
+        let right_fighter1 = RaftFighter::new(
+            Entity {
+                position: Position {
+                    x: raft_right.entity.position.x + raft_right.width * 1 / 5,
+                    y: raft_right.entity.position.y + raft_right.height * 4 / 5,
+                },
+                velocity: consts::NO_VELOCITY,
+                is_active: true,
+            },
+            GunTypes::Bazooka,
+            consts::DEFAULT_RAFT_FIGHTER_WIDTH,
+            consts::DEFAULT_RAFT_FIGHTER_HEIGHT,
+        );
+
+        let right_fighter2 = RaftFighter::new(
+            Entity {
+                position: Position {
+                    x: raft_right.entity.position.x + raft_right.width * 2 / 5,
+                    y: raft_right.entity.position.y + raft_right.height * 4 / 5,
+                },
+                velocity: consts::NO_VELOCITY,
+                is_active: true,
+            },
+            GunTypes::SMG,
+            consts::DEFAULT_RAFT_FIGHTER_WIDTH,
+            consts::DEFAULT_RAFT_FIGHTER_HEIGHT,
+        );
+
+        raft_left.position_fighters(vec![left_fighter1]);
+        raft_right.position_fighters(vec![right_fighter1, right_fighter2]);
 
         Self {
             raft_left,
-            raft_right: Raft::new(
-                Entity {
-                    position: Position {
-                        x: consts::WORLD_MAX_X - consts::DEFAULT_RAFT_WIDTH,
-                        y: consts::RIGHT_RAFT_INIT_POS.y,
-                    },
-                    velocity: consts::NO_VELOCITY,
-                    is_active: true,
-                },
-                Style {
-                    color: "#0000FF".to_string(),
-                },
-            ),
+            raft_right,
             left_projectiles: vec![],
             right_projectiles: vec![],
             ticks: 0,

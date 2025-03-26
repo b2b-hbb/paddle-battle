@@ -1,3 +1,4 @@
+#![no_std]
 #![warn(clippy::pedantic, clippy::nursery, clippy::all)]
 
 #[cfg(feature = "stylus")]

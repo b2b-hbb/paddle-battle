@@ -96,16 +96,16 @@ async fn integration_test() {
     assert_eq!(log.leftRaftHealth, U256::from(10_000));
     assert_eq!(log.rightRaftHealth, U256::from(9_500));
     assert_eq!(log.leftProjectileCount, U256::from(45));
-    assert_eq!(log.rightProjectileCount, U256::from(0));
+    assert_eq!(log.rightProjectileCount, U256::from(52));
 
-    assert_eq!(receipt.gas_used, 790_754);
+    assert_eq!(receipt.gas_used, 1_304_736);
 
     let post_game_state_hash = contract.gameStateHash().call().await.unwrap();
 
     assert_eq!(post_game_state_hash._0, log.gameStateHash);
     assert_eq!(
         post_game_state_hash._0,
-        B256::from_hex("0xaf5a095d6a5f3d5bb2ae78b550bf07c374cdeb7ffdda9fef1072ab75aea3d263")
+        B256::from_hex("0x400b4863233cfe96227b2553e1cee0591bbf7c763c454e131231af391bc3f413")
             .unwrap()
     );
 

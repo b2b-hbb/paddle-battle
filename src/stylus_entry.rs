@@ -1,5 +1,7 @@
 extern crate alloc;
 
+use alloc::vec::Vec;
+use alloc::vec;
 /// Import items from the SDK. The prelude contains common traits and macros.
 use stylus_sdk::{
     alloy_primitives::{B256, U256},
@@ -50,8 +52,7 @@ impl PaddleBattle {
         );
     }
 
-    pub fn load_and_tick(&mut self, num_ticks: u32, inputs: Vec<u32>, serialized_state: String) {
-        // TODO: more efficient encoding/decoding of game state since this bloats the contract size
+    pub fn load_and_tick(&mut self, num_ticks: u32, inputs: Vec<u32>, serialized_state: Vec<u8>) {
         // let mut curr_game_state = GameState::from_serialized_state(serialized_state);
         let mut curr_game_state = GameState::new();
         let prev_hash = self.game_state_hash();

@@ -1,3 +1,6 @@
+extern crate alloc;
+
+use alloc::vec::Vec;
 use console_error_panic_hook::set_once;
 use wasm_bindgen::prelude::*;
 use crate::consts;

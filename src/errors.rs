@@ -1,6 +1,6 @@
-use std::fmt;
+use core::fmt;
 
-pub type Result<T> = std::result::Result<T, SimulationError>;
+pub type Result<T> = core::result::Result<T, SimulationError>;
 
 #[derive(Debug)]
 pub enum SimulationError {
