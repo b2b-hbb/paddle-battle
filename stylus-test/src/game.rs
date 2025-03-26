@@ -16,7 +16,6 @@ pub enum GameInput {
     MoveLeftRaftDown,
 }
 
-
 impl GameInput {
     pub const fn to_u32(&self) -> u32 {
         match self {
@@ -39,4 +38,4 @@ impl GameInput {
 }
 
 pub const TICKS_PER_INPUT: u32 = 5;
-pub const TICK_INPUT_API_CHUNK_SIZE: u32 = 10; 
+pub const TICK_INPUT_API_CHUNK_SIZE: u32 = 10;

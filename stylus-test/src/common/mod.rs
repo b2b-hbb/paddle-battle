@@ -12,7 +12,7 @@ use project::read_pkg_name;
 
 fn get_wasm_path(manifest_dir: &PathBuf) -> PathBuf {
     let name = read_pkg_name(manifest_dir).unwrap();
-    get_wasm( &name).unwrap()
+    get_wasm(&name).unwrap()
 }
 
 pub async fn setup(priv_key: &str, rpc_url: &str, manifest_dir: &PathBuf) -> eyre::Result<Address> {

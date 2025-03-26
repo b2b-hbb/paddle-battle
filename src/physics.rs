@@ -123,7 +123,11 @@ impl Projectile {
         const SINE_TABLE: [i32; 8] = [0, 707, 1000, 707, 0, -707, -1000, -707];
         let sine_value = SINE_TABLE[(curr_tick * FREQUENCY) as usize % SINE_TABLE.len()];
         let y_offset = ((AMPLITUDE as i32 * sine_value) / 1000) as u32;
-        self.entity.position.y = self.entity.position.y.saturating_add_signed(y_offset as i32);
+        self.entity.position.y = self
+            .entity
+            .position
+            .y
+            .saturating_add_signed(y_offset as i32);
 
         // let frequency = 0.1; // Adjust the frequency of the sine wave
         // self.entity.position.y = self.entity.position.y + (amplitude as f32 * (curr_tick as f32 * frequency).sin()) as u32;

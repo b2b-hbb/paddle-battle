@@ -6,8 +6,8 @@ use crate::physics::Collision;
 use crate::world::Bearings;
 use crate::world::GunTypes;
 use crate::world::RaftFighter;
-use crate::world::{Entity, GameState, Position, Projectile, Raft, Velocity};
 use crate::world::Style;
+use crate::world::{Entity, GameState, Position, Projectile, Raft, Velocity};
 
 #[cfg(test)]
 use strum_macros::{EnumCount, EnumIter};
@@ -79,14 +79,15 @@ impl GameInput {
 impl GameState {
     #[must_use]
     pub fn new() -> Self {
-
         let mut raft_left = Raft::new(
             Entity {
                 position: consts::LEFT_RAFT_INIT_POS,
                 velocity: consts::NO_VELOCITY,
                 is_active: true,
             },
-            Style { color: "#FF0000".to_string() },
+            Style {
+                color: "#FF0000".to_string(),
+            },
         );
 
         let fighter_entity = Entity {
@@ -99,7 +100,10 @@ impl GameState {
         };
 
         let bazooka_fighter = RaftFighter::new(
-            fighter_entity, GunTypes::SMG, consts::DEFAULT_RAFT_FIGHTER_WIDTH, consts::DEFAULT_RAFT_FIGHTER_HEIGHT
+            fighter_entity,
+            GunTypes::SMG,
+            consts::DEFAULT_RAFT_FIGHTER_WIDTH,
+            consts::DEFAULT_RAFT_FIGHTER_HEIGHT,
         );
 
         raft_left.position_fighters(vec![bazooka_fighter]);
@@ -115,7 +119,9 @@ impl GameState {
                     velocity: consts::NO_VELOCITY,
                     is_active: true,
                 },
-                Style { color: "#0000FF".to_string() },
+                Style {
+                    color: "#0000FF".to_string(),
+                },
             ),
             left_projectiles: vec![],
             right_projectiles: vec![],
@@ -192,8 +198,18 @@ impl GameState {
             update_raft(raft_left, curr_tick);
             update_raft(raft_right, curr_tick);
 
-            update_fighters(raft_left, &mut self.left_projectiles, Bearings::Northeast, curr_tick);
-            update_fighters(raft_right, &mut self.right_projectiles, Bearings::Northwest, curr_tick);
+            update_fighters(
+                raft_left,
+                &mut self.left_projectiles,
+                Bearings::Northeast,
+                curr_tick,
+            );
+            update_fighters(
+                raft_right,
+                &mut self.right_projectiles,
+                Bearings::Northwest,
+                curr_tick,
+            );
 
             update_projectiles(&mut self.left_projectiles, raft_right, curr_tick);
             update_projectiles(&mut self.right_projectiles, raft_left, curr_tick);
@@ -203,7 +219,6 @@ impl GameState {
         Ok(())
     }
 }
-
 
 fn handle_input(
     input_for_tick: Option<&Vec<u32>>,
@@ -265,7 +280,12 @@ fn update_raft(raft: &mut Raft, curr_tick: u32) {
     }
 }
 
-fn update_fighters(raft: &mut Raft, projectiles: &mut Vec<Projectile>, direction: Bearings,curr_tick: u32) {
+fn update_fighters(
+    raft: &mut Raft,
+    projectiles: &mut Vec<Projectile>,
+    direction: Bearings,
+    curr_tick: u32,
+) {
     if raft.entity.is_active {
         for fighter in &raft.raft_fighters {
             let fire_rate = fighter.gun.fire_rate();
@@ -307,9 +327,6 @@ fn update_projectiles(projectiles: &mut Vec<Projectile>, opposing_raft: &mut Raf
     projectiles.retain(|p| p.entity.is_active);
 }
 
-
-
-
 impl Default for GameState {
     fn default() -> Self {
         Self::new()
@@ -334,9 +351,11 @@ const fn tick_inputs_needed(ticks_to_process: u32) -> u32 {
 
 fn is_within_world_bounds<T: Collision>(obj: &T) -> bool {
     let (x, y, width, height) = obj.bounding_box();
-    x > 0 && y > 0 && x.saturating_add(width) <= consts::WORLD_MAX_X && y.saturating_add(height) <= consts::WORLD_MAX_Y
+    x > 0
+        && y > 0
+        && x.saturating_add(width) <= consts::WORLD_MAX_X
+        && y.saturating_add(height) <= consts::WORLD_MAX_Y
 }
-
 
 impl Raft {
     pub fn position_fighters(&mut self, fighters: Vec<RaftFighter>) {
@@ -355,7 +374,8 @@ impl Raft {
             let overlap_area = overlap_x * overlap_y;
 
             // Check if the overlap area is at least a certain percentage of the fighter's area
-            if overlap_area * 100 >= fighter_area * 5 { // Assuming 5% overlap is required
+            if overlap_area * 100 >= fighter_area * 5 {
+                // Assuming 5% overlap is required
                 self.raft_fighters.push(fighter.clone());
             }
         }
@@ -365,9 +385,9 @@ impl Raft {
         if self.curr_health > 0 {
             let perc = self.max_health / self.curr_health;
             let dmg = projectile.radius * perc;
-            
+
             self.curr_health = self.curr_health.saturating_sub(dmg);
-            
+
             if self.curr_health == 0 {
                 self.entity.is_active = false;
             }
@@ -380,9 +400,9 @@ impl RaftFighter {
         if self.curr_health > 0 {
             let perc = self.max_health / self.curr_health;
             let dmg = projectile.radius * perc;
-            
+
             self.curr_health = self.curr_health.saturating_sub(dmg);
-            
+
             if self.curr_health == 0 {
                 self.entity.is_active = false;
             }
@@ -419,14 +439,38 @@ impl RaftFighter {
         };
 
         let velocity = match side {
-            Bearings::North => Velocity { vx: 0, vy: -base_velocity },
-            Bearings::South => Velocity { vx: 0, vy: base_velocity },
-            Bearings::East => Velocity { vx: base_velocity, vy: 0 },
-            Bearings::West => Velocity { vx: -base_velocity, vy: 0 },
-            Bearings::Northeast => Velocity { vx: base_velocity, vy: -base_velocity },
-            Bearings::Northwest => Velocity { vx: -base_velocity, vy: -base_velocity },
-            Bearings::Southeast => Velocity { vx: base_velocity, vy: base_velocity },
-            Bearings::Southwest => Velocity { vx: -base_velocity, vy: base_velocity },
+            Bearings::North => Velocity {
+                vx: 0,
+                vy: -base_velocity,
+            },
+            Bearings::South => Velocity {
+                vx: 0,
+                vy: base_velocity,
+            },
+            Bearings::East => Velocity {
+                vx: base_velocity,
+                vy: 0,
+            },
+            Bearings::West => Velocity {
+                vx: -base_velocity,
+                vy: 0,
+            },
+            Bearings::Northeast => Velocity {
+                vx: base_velocity,
+                vy: -base_velocity,
+            },
+            Bearings::Northwest => Velocity {
+                vx: -base_velocity,
+                vy: -base_velocity,
+            },
+            Bearings::Southeast => Velocity {
+                vx: base_velocity,
+                vy: base_velocity,
+            },
+            Bearings::Southwest => Velocity {
+                vx: -base_velocity,
+                vy: base_velocity,
+            },
         };
 
         Projectile {

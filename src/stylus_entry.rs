@@ -1,7 +1,14 @@
 extern crate alloc;
 
 /// Import items from the SDK. The prelude contains common traits and macros.
-use stylus_sdk::{alloy_primitives::{B256, U256}, alloy_sol_types::sol, crypto::keccak, evm, prelude::*, storage::StorageFixedBytes};
+use stylus_sdk::{
+    alloy_primitives::{B256, U256},
+    alloy_sol_types::sol,
+    crypto::keccak,
+    evm,
+    prelude::*,
+    storage::StorageFixedBytes,
+};
 
 use crate::world::GameState;
 
@@ -44,15 +51,15 @@ impl PaddleBattle {
 
     pub fn tick(&mut self, num_ticks: u32, inputs: Vec<u32>) {
         let mut curr_game_state = GameState::new();
-        _tick(num_ticks, &inputs, &mut curr_game_state, &mut self.game_state_hash);
+        _tick(
+            num_ticks,
+            &inputs,
+            &mut curr_game_state,
+            &mut self.game_state_hash,
+        );
     }
 
-    pub fn load_and_tick(
-        &mut self,
-        num_ticks: u32,
-        inputs: Vec<u32>,
-        serialized_state: String
-    ) {
+    pub fn load_and_tick(&mut self, num_ticks: u32, inputs: Vec<u32>, serialized_state: String) {
         // TODO: more efficient encoding/decoding of game state since this bloats the contract size
         // let mut curr_game_state = GameState::from_serialized_state(serialized_state);
         let mut curr_game_state = GameState::new();
@@ -60,22 +67,34 @@ impl PaddleBattle {
         if prev_hash != curr_game_state.hash() {
             panic!("Previous game state hash mismatch");
         }
-        
-        _tick(num_ticks, &inputs, &mut curr_game_state, &mut self.game_state_hash);
+
+        _tick(
+            num_ticks,
+            &inputs,
+            &mut curr_game_state,
+            &mut self.game_state_hash,
+        );
     }
 }
 
-fn _tick(num_ticks: u32, inputs: &Vec<u32>, curr_game_state: &mut GameState, game_state_hash_storage: &mut StorageFixedBytes<32>) {
+fn _tick(
+    num_ticks: u32,
+    inputs: &Vec<u32>,
+    curr_game_state: &mut GameState,
+    game_state_hash_storage: &mut StorageFixedBytes<32>,
+) {
     if !validate_inputs(&inputs) {
         panic!("invalid inputs");
     }
 
-    curr_game_state.tick(num_ticks, &inputs).unwrap_or_else(|e| panic!("SimulationError: {:?}", e));
+    curr_game_state
+        .tick(num_ticks, &inputs)
+        .unwrap_or_else(|e| panic!("SimulationError: {:?}", e));
 
     let new_hash = curr_game_state.hash();
     game_state_hash_storage.set(new_hash);
-    
-    evm::log(GameStateEvent{
+
+    evm::log(GameStateEvent {
         game_state_hash: new_hash,
         left_raft_health: U256::from(curr_game_state.raft_left.curr_health),
         right_raft_health: U256::from(curr_game_state.raft_right.curr_health),

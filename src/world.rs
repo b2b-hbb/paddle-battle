@@ -124,7 +124,9 @@ impl Raft {
 
 impl RaftFighter {
     pub fn style(&self) -> Style {
-        Style { color: "#0F002F".to_string() }
+        Style {
+            color: "#0F002F".to_string(),
+        }
     }
 }
 
@@ -137,7 +139,9 @@ impl GunTypes {
             GunTypes::StraightShooter => "#0000FF",
         };
 
-        Style { color: color.to_string() }
+        Style {
+            color: color.to_string(),
+        }
     }
 }
 
