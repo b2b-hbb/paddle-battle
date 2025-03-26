@@ -1,7 +1,7 @@
 extern crate alloc;
 
 /// Import items from the SDK. The prelude contains common traits and macros.
-use stylus_sdk::{alloy_primitives::U256, alloy_primitives::B256, alloy_sol_types::sol, crypto::keccak, evm, prelude::*};
+use stylus_sdk::{alloy_primitives::{B256, U256}, alloy_sol_types::sol, crypto::keccak, evm, prelude::*, storage::StorageFixedBytes};
 
 use crate::world::GameState;
 
@@ -10,7 +10,6 @@ use crate::world::GameState;
 sol_storage! {
     #[entrypoint]
     pub struct PaddleBattle {
-        uint256 number;
         bytes32 game_state_hash;
     }
 }
@@ -21,12 +20,16 @@ sol! {
 
 impl GameState {
     // TODO: assess abi encoding of game state. current approach bloats contract size too much
-    // pub fn from_calldata(calldata: String) -> Self {
-    //     serde_json::from_str(&calldata).expect("failed to deserialize game state")
-    // }
+    pub fn from_serialized_state(serialized_state: String) -> Self {
+        serde_json::from_str(&serialized_state).expect("failed to deserialize game state")
+    }
+
+    fn to_serialized_state(&self) -> String {
+        serde_json::to_string(&self).expect("Failed to serialize game state")
+    }
 
     pub fn hash(&self) -> B256 {
-        let serialized_game_state = serde_json::to_string(&self).expect("Failed to serialize game state");
+        let serialized_game_state = self.to_serialized_state();
         let hash = keccak(&serialized_game_state);
         hash
     }
@@ -35,77 +38,53 @@ impl GameState {
 /// Declare that `PaddleBattle` is a contract with the following external methods.
 #[public]
 impl PaddleBattle {
-    /// Gets the number from storage.
-    pub fn number(&self) -> U256 {
-        self.number.get()
-    }
-
-    /// Sets a number in storage to a user-specified value.
-    pub fn set_number(&mut self, new_number: U256) {
-        self.number.set(new_number);
-    }
-
     pub fn game_state_hash(&self) -> B256 {
         self.game_state_hash.get()
     }
 
-    /// Increments `number` and updates its value in storage.
-    pub fn increment(&mut self) {
-        let number = self.number.get();
-        self.set_number(number + U256::from(1));
-    }
-
-    #[allow(
-        clippy::must_use_candidate,
-        clippy::needless_pass_by_value,
-        clippy::uninlined_format_args
-    )]
     pub fn tick(&mut self, num_ticks: u32, inputs: Vec<u32>) {
         let mut curr_game_state = GameState::new();
-        
-        curr_game_state.tick(num_ticks, &inputs).unwrap_or_else(|e| panic!("SimulationError: {:?}", e));
-
-        self.increment();
-
-        let new_hash = curr_game_state.hash();
-        self.game_state_hash.set(new_hash);
-
-        evm::log(GameStateEvent{
-            game_state_hash: new_hash,
-            left_raft_health: U256::from(curr_game_state.raft_left.curr_health),
-            right_raft_health: U256::from(curr_game_state.raft_right.curr_health),
-            left_projectile_count: U256::from(curr_game_state.left_projectiles.len()),
-            right_projectile_count: U256::from(curr_game_state.right_projectiles.len()),
-        });
+        _tick(num_ticks, &inputs, &mut curr_game_state, &mut self.game_state_hash);
     }
 
     pub fn load_and_tick(
         &mut self,
         num_ticks: u32,
         inputs: Vec<u32>,
-        calldata: String
+        serialized_state: String
     ) {
-        
-        // let mut curr_game_state = GameState::from_calldata(calldata);
+        // TODO: more efficient encoding/decoding of game state since this bloats the contract size
+        // let mut curr_game_state = GameState::from_serialized_state(serialized_state);
         let mut curr_game_state = GameState::new();
-
         let prev_hash = self.game_state_hash();
-
         if prev_hash != curr_game_state.hash() {
-            panic!("Game state hash mismatch");
+            panic!("Previous game state hash mismatch");
         }
         
-        curr_game_state.tick(num_ticks, &inputs).unwrap_or_else(|e| panic!("SimulationError: {:?}", e));
-
-        let new_hash = curr_game_state.hash();
-        self.game_state_hash.set(new_hash);
-        
-        evm::log(GameStateEvent{
-            game_state_hash: new_hash,
-            left_raft_health: U256::from(curr_game_state.raft_left.curr_health),
-            right_raft_health: U256::from(curr_game_state.raft_right.curr_health),
-            left_projectile_count: U256::from(curr_game_state.left_projectiles.len()),
-            right_projectile_count: U256::from(curr_game_state.right_projectiles.len()),
-        });
+        _tick(num_ticks, &inputs, &mut curr_game_state, &mut self.game_state_hash);
     }
+}
+
+fn _tick(num_ticks: u32, inputs: &Vec<u32>, curr_game_state: &mut GameState, game_state_hash_storage: &mut StorageFixedBytes<32>) {
+    if !validate_inputs(&inputs) {
+        panic!("invalid inputs");
+    }
+
+    curr_game_state.tick(num_ticks, &inputs).unwrap_or_else(|e| panic!("SimulationError: {:?}", e));
+
+    let new_hash = curr_game_state.hash();
+    game_state_hash_storage.set(new_hash);
+    
+    evm::log(GameStateEvent{
+        game_state_hash: new_hash,
+        left_raft_health: U256::from(curr_game_state.raft_left.curr_health),
+        right_raft_health: U256::from(curr_game_state.raft_right.curr_health),
+        left_projectile_count: U256::from(curr_game_state.left_projectiles.len()),
+        right_projectile_count: U256::from(curr_game_state.right_projectiles.len()),
+    });
+}
+
+fn validate_inputs(inputs: &Vec<u32>) -> bool {
+    // TODO: validate inputs. this could be a sequencer's sig or countersignatures by the players involved
+    true
 }

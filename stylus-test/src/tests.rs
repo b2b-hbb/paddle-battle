@@ -30,21 +30,6 @@ async fn integration_test() {
 
     let contract = PaddleBattle::new(address, provider.clone());
 
-    let prev_num = contract.number().call().await;
-    assert_eq!(prev_num.unwrap()._0, U256::from(0));
-
-    let _ = contract
-        .increment()
-        .send()
-        .await
-        .expect("failed to send tx")
-        .watch()
-        .await
-        .expect("failed to submit tx");
-
-    let new_num = contract.number().call().await;
-    assert_eq!(new_num.unwrap()._0, U256::from(1));
-
 
     // Create input array similar to game loop
     let mut input_codes: Vec<u32> = Vec::new();
@@ -106,7 +91,7 @@ async fn integration_test() {
     assert_eq!(log.leftProjectileCount, U256::from(45));
     assert_eq!(log.rightProjectileCount, U256::from(0));
 
-    assert_eq!(receipt.gas_used, 822_452);
+    assert_eq!(receipt.gas_used, 816_324);
 
     let post_game_state_hash = contract.gameStateHash().call().await.unwrap();
 

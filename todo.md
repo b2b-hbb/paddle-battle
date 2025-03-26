@@ -1,4 +1,14 @@
 # todo
+
+
+make sure that there isn't a dependency issue
+we only leverage stylus sdk inside the stylus_entrypoint
+elsewhere, we rely on alloy and its primitives so that stylus sdk doesn't compile to the web
+maybe only use the alloy primitives exported by stylus sdk to make sure that there arent versioning issues that create descrepencies in the future
+
+
+
+
 - more responsive movement
 - more npcs
 - cost run onchain long game
