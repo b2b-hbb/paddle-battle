@@ -5,7 +5,6 @@ async fn integration_test() {
     use crate::{GameInput, TICKS_PER_INPUT, TICK_INPUT_API_CHUNK_SIZE};
     use alloy::primitives::Log;
     use alloy::primitives::U256;
-    use alloy::primitives::Bytes;
     use alloy::{hex::FromHex, primitives::B256};
     use alloy::{
         network::EthereumWallet, providers::ProviderBuilder, signers::local::PrivateKeySigner,
@@ -78,6 +77,8 @@ async fn integration_test() {
         .expect("failed to get receipt");
 
     println!("submitted tx with inputs: {:?}", final_inputs.clone());
+    assert_eq!(inputs_needed, 200);
+
     println!("Transaction gas used: {:?}", receipt.gas_used);
 
     pub fn decoded_log<E: SolEvent>(receipt: &TransactionReceipt) -> Option<Log<E>> {
@@ -115,22 +116,12 @@ async fn integration_test() {
 
     // Create array of input arrays for multiple ticks
     // should be the number of ticks divided by the number of ticks per input
-    let num_ticks = 1000;
-    let inputs_needed = num_ticks / TICKS_PER_INPUT;
 
-    let mut final_inputs: Vec<u32> = Vec::new();
-    for _ in 0..inputs_needed {
-        final_inputs.extend(&input_codes);
-    }
-
-    // TODO: 
-    println!("local game state len: {:?}", local_game_state.to_serialized_state().len());
-    assert_eq!(local_game_state.to_serialized_state().len(), 3658);
-    println!("inputs needed len: {:?}", inputs_needed);
-    assert_eq!(inputs_needed, 200);
+    let serialized_game_state = local_game_state.to_serialized_state();
+    assert_eq!(serialized_game_state.len(), 3658);
 
     let pending_tx2 = contract
-        .loadAndTick(num_ticks, final_inputs.clone(), local_game_state.to_serialized_state().into())
+        .loadAndTick(num_ticks, final_inputs.clone(), serialized_game_state.into())
         .send()
         .await
         .expect("failed to send tx");
@@ -160,6 +151,6 @@ async fn integration_test() {
     let post_game_state_hash2 = contract.gameStateHash().call().await.unwrap();
     assert_eq!(post_game_state_hash2._0, log2.gameStateHash);
     assert_eq!(post_game_state_hash2._0, expected_post_game_state_hash2);
-    
+
     // TODO: now execute a test from the UI over here by loading the inputs and then calling the tick function
 }
