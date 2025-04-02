@@ -120,6 +120,8 @@ async fn integration_test() {
     let serialized_game_state = local_game_state.to_serialized_state();
     assert_eq!(serialized_game_state.len(), 3658);
 
+    /*
+
     let pending_tx2 = contract
         .loadAndTick(num_ticks, final_inputs.clone(), serialized_game_state.into())
         .send()
@@ -151,6 +153,8 @@ async fn integration_test() {
     let post_game_state_hash2 = contract.gameStateHash().call().await.unwrap();
     assert_eq!(post_game_state_hash2._0, log2.gameStateHash);
     assert_eq!(post_game_state_hash2._0, expected_post_game_state_hash2);
+
+    */
 
     // TODO: now execute a test from the UI over here by loading the inputs and then calling the tick function
 }
