@@ -45,8 +45,8 @@ impl PaddleBattle {
     }
 
     pub fn load_and_tick(&mut self, num_ticks: u32, inputs: Vec<u32>, serialized_state: Bytes) {
-        let mut curr_game_state = GameState::from_serialized_state(&serialized_state.to_vec());
-        // let mut curr_game_state = GameState::new();
+        // let mut curr_game_state = GameState::from_serialized_state(&serialized_state.to_vec());
+        let mut curr_game_state = GameState::new();
         let prev_hash = self.game_state_hash();
         if prev_hash != curr_game_state.hash() {
             panic!("Previous game state hash mismatch");
