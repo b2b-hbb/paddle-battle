@@ -1,0 +1,49 @@
+name: website-build
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: build website
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Install wasm-pack
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: wasm-pack
+
+      - name: Build Website
+        run: make web
+
+      - name: Upload Website Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: website-build
+          path: website/src/pkg/
+          retention-days: 1
+
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Commit Website Changes
+        run: |
+          git add website/src/pkg/
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update website build [skip ci]" && git push) 
